@@ -68,7 +68,8 @@ function computeSolvablePairingWithRetry(positions, maxAttempts = 200) {
 }
 
 class MahjongGame {
-  constructor() {
+  constructor(difficulty = 'medium') {
+    this.difficulty = LAYOUTS[difficulty] ? difficulty : 'medium';
     this.tiles = [];
     this.selectedId = null;
     this.history = [];
@@ -79,12 +80,13 @@ class MahjongGame {
   }
 
   reset() {
-    this.tiles = TURTLE_LAYOUT.map((pos, i) => ({
+    const layout = LAYOUTS[this.difficulty] || TURTLE_LAYOUT;
+    this.tiles = layout.map((pos, i) => ({
       id: i, x: pos.x, y: pos.y, z: pos.z, removed: false, typeId: null,
     }));
 
     const pairing = computeSolvablePairingWithRetry(this.tiles.map((t) => ({ refId: t.id, x: t.x, y: t.y, z: t.z })));
-    const units = buildShuffledPairUnits();
+    const units = buildPairUnitsForDifficulty(this.difficulty);
     const byId = new Map(this.tiles.map((t) => [t.id, t]));
     pairing.forEach(([a, b], idx) => {
       const [typeA, typeB] = units[idx];

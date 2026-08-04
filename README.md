@@ -14,7 +14,8 @@ The interface opens with a short animated intro, and is fully bilingual, switchi
 ## 📦 What's Inside
 
 ### Solitaire
-- 🐢 Full 144-tile "turtle" pyramid spread across 5 layers, with proper covered / blocked / free tile rules
+- 🎚️ Three difficulty levels — **Easy** (a flat 108-tile suits-only spread, nothing ever covered), **Medium** (the classic 144-tile turtle), and **Hard** (the same 144 tiles stacked into a taller, 5-layer peak)
+- 🐢 Full turtle-pyramid spreads with proper covered / blocked / free tile rules
 - ✅ Provably solvable deals — tiles are assigned by walking the board's own removal order backwards, so a complete solve always exists
 - 💡 Limited hints that highlight a real playable pair, 🔀 a shuffle that keeps the remaining board solvable, and ↩️ unlimited undo
 - 🎬 Smooth tile animations — lift on select, shake on mismatch, fly-away on match, staggered deal-in, and a confetti burst on winning

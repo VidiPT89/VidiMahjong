@@ -1,6 +1,7 @@
 /* Rendering, screen navigation, animation and persistence glue. */
 
 const SAVE_KEY = 'vidimahjong-save';
+const DIFFICULTY_KEY = 'vidimahjong-difficulty';
 const HINT_LIMIT = 6;
 
 let currentLang = getStoredLang();
@@ -8,6 +9,24 @@ let game = null;
 let hintsRemaining = HINT_LIMIT;
 let timerInterval = null;
 let hintTimeout = null;
+
+function getStoredDifficulty() {
+  try {
+    const stored = localStorage.getItem(DIFFICULTY_KEY);
+    if (stored && LAYOUTS[stored]) return stored;
+  } catch (e) { /* localStorage unavailable */ }
+  return 'easy';
+}
+function setStoredDifficulty(difficulty) {
+  try { localStorage.setItem(DIFFICULTY_KEY, difficulty); } catch (e) { /* ignore */ }
+}
+let selectedDifficulty = getStoredDifficulty();
+
+function applyDifficultyUI() {
+  document.querySelectorAll('.difficulty-option').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.difficulty === selectedDifficulty);
+  });
+}
 
 const el = (id) => document.getElementById(id);
 const boardEl = () => el('board');
@@ -98,17 +117,27 @@ function initSplash() {
    Board rendering / tile sizing
    --------------------------------------------------------------------- */
 
-function layoutExtents() {
-  const xs = TURTLE_LAYOUT.map((p) => p.x);
-  const ys = TURTLE_LAYOUT.map((p) => p.y);
-  const zs = TURTLE_LAYOUT.map((p) => p.z);
+// Extents depend on which difficulty's layout is active (Easy drops the
+// flippers and every upper layer; Hard adds a 5th one) — computed from the
+// game's own tiles rather than a single fixed layout, so board sizing and
+// tile placement stay correct no matter which one is in play.
+let EXTENTS = { minX: -1, maxX: 15, minY: 0, maxY: 7, maxZ: 4 };
+
+function layoutExtentsFor(positions) {
+  const xs = positions.map((p) => p.x);
+  const ys = positions.map((p) => p.y);
+  const zs = positions.map((p) => p.z);
   return {
     minX: Math.min(...xs), maxX: Math.max(...xs),
     minY: Math.min(...ys), maxY: Math.max(...ys),
     maxZ: Math.max(...zs),
   };
 }
-const EXTENTS = layoutExtents();
+
+// A comfortably tappable floor — the board-wrap scrolls when the full
+// spread doesn't fit, so tiles never need to shrink below this just to
+// avoid overflow (mobile tiles were previously getting crushed to 24px).
+const MIN_TILE_W = 34;
 
 function computeTileSize() {
   const wrap = document.querySelector('.board-wrap');
@@ -120,7 +149,7 @@ function computeTileSize() {
   const spanY = EXTENTS.maxY - EXTENTS.minY;
   const tileWFromH = availH / ((spanY * 0.82 + 1) * 1.37 + EXTENTS.maxZ * 0.18);
   tileW = Math.min(tileW, tileWFromH);
-  tileW = Math.max(24, Math.min(62, tileW));
+  tileW = Math.max(MIN_TILE_W, Math.min(62, tileW));
 
   const tileH = tileW * 1.37;
   const stepX = tileW * 0.86;
@@ -219,7 +248,8 @@ function refreshTileStates() {
    --------------------------------------------------------------------- */
 
 function startNewGame() {
-  game = new MahjongGame();
+  game = new MahjongGame(selectedDifficulty);
+  EXTENTS = layoutExtentsFor(game.tiles);
   hintsRemaining = HINT_LIMIT;
   clearSavedGame();
   showScreen('game-screen');
@@ -235,6 +265,7 @@ function resumeGame() {
   const loaded = loadGame();
   if (!loaded) { startNewGame(); return; }
   game = loaded.game;
+  EXTENTS = layoutExtentsFor(game.tiles);
   hintsRemaining = loaded.hintsRemaining;
   showScreen('game-screen');
   renderBoard({ dealing: false });
@@ -511,6 +542,7 @@ function saveGame() {
   if (!game) return;
   try {
     const data = {
+      difficulty: game.difficulty,
       typeIds: game.tiles.map((t) => t.typeId),
       removed: game.tiles.map((t) => t.removed),
       moves: game.moves,
@@ -536,7 +568,8 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    const g = new MahjongGame();
+    const g = new MahjongGame(data.difficulty || 'medium');
+    if (!data.typeIds || data.typeIds.length !== g.tiles.length) return null;
     g.tiles.forEach((t, i) => {
       t.typeId = data.typeIds[i];
       t.removed = data.removed[i];
@@ -557,9 +590,18 @@ function loadGame() {
 
 function init() {
   applyLang();
+  applyDifficultyUI();
   initSplash();
 
   el('lang-toggle').addEventListener('click', () => setLang(currentLang === 'pt' ? 'en' : 'pt'));
+
+  document.querySelectorAll('.difficulty-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedDifficulty = btn.dataset.difficulty;
+      setStoredDifficulty(selectedDifficulty);
+      applyDifficultyUI();
+    });
+  });
 
   el('btn-play').addEventListener('click', () => { score = 0; startNewGame(); });
   el('btn-continue').addEventListener('click', resumeGame);

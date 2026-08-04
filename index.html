@@ -7,7 +7,7 @@
 <meta name="description" content="Mahjong Solitário moderno e animado — combine pares, limpe o tabuleiro, bilingue PT/EN.">
 <meta name="theme-color" content="#0a0a0f">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%230a0a0f%22/><text x=%2250%22 y=%2266%22 font-size=%2258%22 text-anchor=%22middle%22 fill=%22%23f59e0b%22 font-family=%22serif%22>筒</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 <div id="app">
@@ -53,10 +53,13 @@
       </h1>
       <p class="menu-subtitle" data-i18n="menuSubtitle"></p>
 
-      <div class="menu-tiles-deco" aria-hidden="true">
-        <div class="deco-tile deco-tile--1"></div>
-        <div class="deco-tile deco-tile--2"></div>
-        <div class="deco-tile deco-tile--3"></div>
+      <div class="difficulty-picker">
+        <p class="difficulty-label" data-i18n="difficultyLabel"></p>
+        <div class="difficulty-options">
+          <button class="difficulty-option" data-difficulty="easy" data-i18n="difficultyEasy"></button>
+          <button class="difficulty-option" data-difficulty="medium" data-i18n="difficultyMedium"></button>
+          <button class="difficulty-option" data-difficulty="hard" data-i18n="difficultyHard"></button>
+        </div>
       </div>
 
       <div class="menu-buttons">
@@ -222,10 +225,10 @@
   <div id="toast" class="toast hidden"></div>
 </div>
 
-<script src="js/i18n.js?v=3"></script>
-<script src="js/tiles-data.js?v=2"></script>
-<script src="js/layout.js?v=2"></script>
-<script src="js/engine.js?v=2"></script>
-<script src="js/ui.js?v=3"></script>
+<script src="js/i18n.js?v=4"></script>
+<script src="js/tiles-data.js?v=3"></script>
+<script src="js/layout.js?v=3"></script>
+<script src="js/engine.js?v=3"></script>
+<script src="js/ui.js?v=4"></script>
 </body>
 </html>
