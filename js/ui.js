@@ -152,6 +152,22 @@ function tileZIndex(tile) {
   return tile.z * 1000 + tile.y * 10 + (tile.x + 2);
 }
 
+/**
+ * `is-dealing` and other animation classes (`is-mismatch`, `is-matched`)
+ * all set the `animation` shorthand at the same specificity — whichever
+ * rule is declared later in style.css wins the cascade regardless of which
+ * class was added most recently. If `is-dealing` is left on a tile forever,
+ * it permanently shadows every later animation (mismatch never shakes,
+ * matched tiles never fly away — they just snap away instead), and
+ * *restarting* it via a reflow trick (e.g. to replay the mismatch shake)
+ * replays dealIn's `opacity: 0` starting frame, which is what looked like
+ * tiles vanishing and reappearing. So: always strip it once its own
+ * entrance animation finishes.
+ */
+function armDealingCleanup(div) {
+  div.addEventListener('animationend', () => div.classList.remove('is-dealing'), { once: true });
+}
+
 function renderTileEl(tile, { dealing } = {}) {
   const div = document.createElement('div');
   div.className = 'tile';
@@ -163,6 +179,7 @@ function renderTileEl(tile, { dealing } = {}) {
   if (dealing) {
     div.classList.add('is-dealing');
     div.style.animationDelay = `${Math.random() * 260}ms`;
+    armDealingCleanup(div);
   }
 
   const face = document.createElement('div');
@@ -239,7 +256,12 @@ function handleSelectResult(result) {
   if (result.type === 'ignored' || result.type === 'blocked') {
     if (result.type === 'blocked') {
       const div = board.querySelector(`.tile[data-id="${result.tile.id}"]`);
-      if (div) { div.classList.remove('is-mismatch'); void div.offsetWidth; div.classList.add('is-mismatch'); }
+      if (div) {
+        div.classList.remove('is-mismatch');
+        void div.offsetWidth;
+        div.classList.add('is-mismatch');
+        div.addEventListener('animationend', () => div.classList.remove('is-mismatch'), { once: true });
+      }
     }
     return;
   }
@@ -250,11 +272,22 @@ function handleSelectResult(result) {
   }
 
   if (result.type === 'mismatch') {
+    // Only the rejected (previously-selected) tile shakes and deselects.
+    // The newly-clicked tile becomes the new selection — it must show the
+    // selected glow immediately, not shake: is-mismatch's keyframe
+    // animation and is-selected's static transform both target `transform`,
+    // so having both classes on the same tile at once let the shake
+    // silently override the glow until the animation finished, then the
+    // tile would suddenly snap into its lifted position — the "flicker"
+    // this was reported as.
     const prevDiv = board.querySelector(`.tile[data-id="${result.previous.id}"]`);
-    if (prevDiv) { prevDiv.classList.remove('is-selected'); prevDiv.classList.add('is-mismatch'); }
-    const div = board.querySelector(`.tile[data-id="${result.tile.id}"]`);
-    if (div) div.classList.add('is-mismatch');
-    setTimeout(refreshTileStates, 50);
+    if (prevDiv) {
+      prevDiv.classList.remove('is-selected', 'is-mismatch');
+      void prevDiv.offsetWidth; // force reflow so the shake animation restarts even if it just played
+      prevDiv.classList.add('is-mismatch');
+      prevDiv.addEventListener('animationend', () => prevDiv.classList.remove('is-mismatch'), { once: true });
+    }
+    refreshTileStates();
     return;
   }
 
@@ -355,6 +388,7 @@ function doShuffle() {
     d.style.animation = '';
     d.classList.add('is-dealing');
     d.style.animationDelay = `${(i % 12) * 15}ms`;
+    armDealingCleanup(d);
   });
   saveGame();
   closeAllModals();
@@ -368,7 +402,7 @@ function doUndo() {
   const board = boardEl();
   [restored.a, restored.b].forEach((t) => {
     const div = board.querySelector(`.tile[data-id="${t.id}"]`);
-    if (div) { div.classList.add('is-dealing'); }
+    if (div) { div.classList.add('is-dealing'); armDealingCleanup(div); }
   });
   updateStats();
   el('btn-undo').disabled = game.history.length === 0;
