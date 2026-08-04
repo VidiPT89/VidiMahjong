@@ -1,0 +1,555 @@
+/* Rendering, screen navigation, animation and persistence glue. */
+
+const SAVE_KEY = 'vidimahjong-save';
+const HINT_LIMIT = 6;
+
+let currentLang = getStoredLang();
+let game = null;
+let hintsRemaining = HINT_LIMIT;
+let timerInterval = null;
+let hintTimeout = null;
+
+const el = (id) => document.getElementById(id);
+const boardEl = () => el('board');
+
+/* ---------------------------------------------------------------------
+   i18n
+   --------------------------------------------------------------------- */
+
+function applyLang() {
+  const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-PT' : 'en';
+  document.title = dict.metaTitle;
+
+  document.querySelectorAll('[data-i18n]').forEach((node) => {
+    const key = node.getAttribute('data-i18n');
+    if (dict[key] !== undefined) node.textContent = dict[key];
+  });
+
+  const toggle = el('lang-toggle');
+  toggle.setAttribute('data-lang', currentLang);
+  toggle.querySelectorAll('.lang-opt').forEach((opt) => {
+    opt.classList.toggle('active', opt.getAttribute('data-lang-opt') === currentLang);
+  });
+
+  if (game) refreshHintBadge();
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  setStoredLang(lang);
+  applyLang();
+}
+
+/* ---------------------------------------------------------------------
+   Screen navigation
+   --------------------------------------------------------------------- */
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.add('hidden'));
+  el(id).classList.remove('hidden');
+}
+
+function goToMenu() {
+  stopTimer();
+  showScreen('menu-screen');
+  el('btn-continue').classList.toggle('hidden', !hasSavedGame());
+}
+
+/* ---------------------------------------------------------------------
+   Splash sequence
+   --------------------------------------------------------------------- */
+
+function initSplash() {
+  const container = el('splash-tiles');
+  const count = 9;
+  for (let i = 0; i < count; i++) {
+    const t = document.createElement('div');
+    t.className = 'splash-flying-tile';
+    const angle = (i / count) * Math.PI * 2;
+    const dist = 260 + Math.random() * 140;
+    t.style.setProperty('--fx', `${Math.cos(angle) * dist}px`);
+    t.style.setProperty('--fy', `${Math.sin(angle) * dist}px`);
+    t.style.setProperty('--fr', `${(Math.random() * 80 - 40)}deg`);
+    t.style.left = `calc(50% - var(--tile-w) / 2)`;
+    t.style.top = `calc(50% - var(--tile-h) / 2)`;
+    t.style.animationDelay = `${Math.random() * 300}ms`;
+    container.appendChild(t);
+  }
+
+  let left = false;
+  const leave = () => {
+    if (left) return;
+    left = true;
+    const splash = el('splash-screen');
+    splash.classList.add('leaving');
+    setTimeout(() => { goToMenu(); }, 550);
+  };
+
+  el('splash-skip').addEventListener('click', leave);
+  el('splash-screen').addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;
+    leave();
+  });
+  setTimeout(leave, 4600);
+}
+
+/* ---------------------------------------------------------------------
+   Board rendering / tile sizing
+   --------------------------------------------------------------------- */
+
+function layoutExtents() {
+  const xs = TURTLE_LAYOUT.map((p) => p.x);
+  const ys = TURTLE_LAYOUT.map((p) => p.y);
+  const zs = TURTLE_LAYOUT.map((p) => p.z);
+  return {
+    minX: Math.min(...xs), maxX: Math.max(...xs),
+    minY: Math.min(...ys), maxY: Math.max(...ys),
+    maxZ: Math.max(...zs),
+  };
+}
+const EXTENTS = layoutExtents();
+
+function computeTileSize() {
+  const wrap = document.querySelector('.board-wrap');
+  const spanX = EXTENTS.maxX - EXTENTS.minX;
+  const availW = Math.max(wrap.clientWidth - 40, 280);
+  const availH = Math.max(window.innerHeight - 220, 320);
+
+  let tileW = availW / (spanX * 0.86 + 1);
+  const spanY = EXTENTS.maxY - EXTENTS.minY;
+  const tileWFromH = availH / ((spanY * 0.82 + 1) * 1.37 + EXTENTS.maxZ * 0.18);
+  tileW = Math.min(tileW, tileWFromH);
+  tileW = Math.max(24, Math.min(62, tileW));
+
+  const tileH = tileW * 1.37;
+  const stepX = tileW * 0.86;
+  const stepY = tileH * 0.82;
+  const nudge = tileW * 0.13;
+
+  const root = document.documentElement.style;
+  root.setProperty('--tile-w', `${tileW}px`);
+  root.setProperty('--tile-h', `${tileH}px`);
+  root.setProperty('--tile-step-x', `${stepX}px`);
+  root.setProperty('--tile-step-y', `${stepY}px`);
+  root.setProperty('--layer-nudge', `${nudge}px`);
+
+  const board = boardEl();
+  board.style.width = `${spanX * stepX + tileW + EXTENTS.maxZ * nudge}px`;
+  board.style.height = `${spanY * stepY + tileH + EXTENTS.maxZ * nudge}px`;
+}
+
+function tilePosition(tile) {
+  const stepX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-step-x'));
+  const stepY = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-step-y'));
+  const nudge = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--layer-nudge'));
+  const left = (tile.x - EXTENTS.minX) * stepX + tile.z * nudge * 0.5;
+  const top = (tile.y - EXTENTS.minY) * stepY - tile.z * nudge + EXTENTS.maxZ * nudge;
+  return { left, top };
+}
+
+function tileZIndex(tile) {
+  return tile.z * 1000 + tile.y * 10 + (tile.x + 2);
+}
+
+function renderTileEl(tile, { dealing } = {}) {
+  const div = document.createElement('div');
+  div.className = 'tile';
+  div.dataset.id = tile.id;
+  const { left, top } = tilePosition(tile);
+  div.style.left = `${left}px`;
+  div.style.top = `${top}px`;
+  div.style.zIndex = tileZIndex(tile);
+  if (dealing) {
+    div.classList.add('is-dealing');
+    div.style.animationDelay = `${Math.random() * 260}ms`;
+  }
+
+  const face = document.createElement('div');
+  face.className = 'tile-face';
+  face.innerHTML = TILE_TYPES_BY_ID[tile.typeId].face();
+  div.appendChild(face);
+
+  div.addEventListener('click', () => onTileClick(tile.id));
+  return div;
+}
+
+function renderBoard({ dealing } = {}) {
+  computeTileSize();
+  const board = boardEl();
+  board.innerHTML = '';
+  game.active().forEach((tile) => board.appendChild(renderTileEl(tile, { dealing })));
+  refreshTileStates();
+}
+
+function refreshTileStates() {
+  const board = boardEl();
+  board.querySelectorAll('.tile').forEach((div) => {
+    const id = Number(div.dataset.id);
+    const tile = game.getTile(id);
+    if (!tile || tile.removed) return;
+    const free = game.isFree(tile);
+    div.classList.toggle('is-free', free);
+    div.classList.toggle('is-blocked', !free);
+    div.classList.toggle('is-covered-visual', game.isCovered(tile));
+    div.classList.toggle('is-blocked-visual', !free && !game.isCovered(tile));
+    div.classList.toggle('is-selected', game.selectedId === id);
+  });
+}
+
+/* ---------------------------------------------------------------------
+   Gameplay
+   --------------------------------------------------------------------- */
+
+function startNewGame() {
+  game = new MahjongGame();
+  hintsRemaining = HINT_LIMIT;
+  clearSavedGame();
+  showScreen('game-screen');
+  renderBoard({ dealing: true });
+  updateStats();
+  startTimer();
+  refreshHintBadge();
+  el('btn-undo').disabled = true;
+  saveGame();
+}
+
+function resumeGame() {
+  const loaded = loadGame();
+  if (!loaded) { startNewGame(); return; }
+  game = loaded.game;
+  hintsRemaining = loaded.hintsRemaining;
+  showScreen('game-screen');
+  renderBoard({ dealing: false });
+  updateStats();
+  startTimer();
+  refreshHintBadge();
+  el('btn-undo').disabled = game.history.length === 0;
+}
+
+function onTileClick(id) {
+  if (document.querySelector('.modal:not(.hidden)')) return;
+  const result = game.select(id);
+  handleSelectResult(result);
+}
+
+function handleSelectResult(result) {
+  const board = boardEl();
+
+  if (result.type === 'ignored' || result.type === 'blocked') {
+    if (result.type === 'blocked') {
+      const div = board.querySelector(`.tile[data-id="${result.tile.id}"]`);
+      if (div) { div.classList.remove('is-mismatch'); void div.offsetWidth; div.classList.add('is-mismatch'); }
+    }
+    return;
+  }
+
+  if (result.type === 'selected' || result.type === 'deselected') {
+    refreshTileStates();
+    return;
+  }
+
+  if (result.type === 'mismatch') {
+    const prevDiv = board.querySelector(`.tile[data-id="${result.previous.id}"]`);
+    if (prevDiv) { prevDiv.classList.remove('is-selected'); prevDiv.classList.add('is-mismatch'); }
+    const div = board.querySelector(`.tile[data-id="${result.tile.id}"]`);
+    if (div) div.classList.add('is-mismatch');
+    setTimeout(refreshTileStates, 50);
+    return;
+  }
+
+  if (result.type === 'matched') {
+    [result.a, result.b].forEach((t) => {
+      const div = board.querySelector(`.tile[data-id="${t.id}"]`);
+      if (div) div.classList.add('is-matched');
+    });
+    game.moves; // noop, keeps intent clear
+    updateScore(10);
+    setTimeout(() => {
+      [result.a, result.b].forEach((t) => {
+        const div = board.querySelector(`.tile[data-id="${t.id}"]`);
+        if (div) div.remove();
+      });
+      refreshTileStates();
+      updateStats();
+      el('btn-undo').disabled = false;
+      saveGame();
+
+      if (result.won) {
+        onWin();
+      } else if (game.isStuck()) {
+        onStuck();
+      }
+    }, 460);
+  }
+}
+
+let score = 0;
+function updateScore(delta) {
+  score = Math.max(0, score + delta);
+  el('stat-score').textContent = score;
+}
+
+function updateStats() {
+  el('stat-moves').textContent = game.moves;
+  el('stat-left').textContent = game.remaining();
+  el('stat-score').textContent = score;
+}
+
+function startTimer() {
+  stopTimer();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
+    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    el('stat-time').textContent = `${m}:${s}`;
+  }, 250);
+}
+function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+function refreshHintBadge() {
+  const badge = el('hint-count');
+  badge.textContent = hintsRemaining;
+  el('btn-hint').disabled = hintsRemaining <= 0;
+}
+
+function useHint() {
+  if (hintsRemaining <= 0) { showToast(I18N[currentLang].noHintsLeft); return; }
+  const pair = game.findHint();
+  if (!pair) { showToast(I18N[currentLang].noHintsLeft); return; }
+  hintsRemaining--;
+  refreshHintBadge();
+  updateScore(-3);
+  saveGame();
+
+  const board = boardEl();
+  clearTimeout(hintTimeout);
+  board.querySelectorAll('.is-hint').forEach((d) => d.classList.remove('is-hint'));
+  pair.forEach((t) => {
+    const div = board.querySelector(`.tile[data-id="${t.id}"]`);
+    if (div) div.classList.add('is-hint');
+  });
+  hintTimeout = setTimeout(() => {
+    pair.forEach((t) => {
+      const div = board.querySelector(`.tile[data-id="${t.id}"]`);
+      if (div) div.classList.remove('is-hint');
+    });
+  }, 1700);
+}
+
+function doShuffle() {
+  try {
+    game.reshuffle();
+  } catch (e) {
+    // Extremely rare: the tiles still on the board are geometrically stuck
+    // (e.g. one is permanently trapped under another) regardless of which
+    // faces we assign them, so no shuffle can restore a solvable board.
+    showToast(I18N[currentLang].shuffleImpossible);
+    return;
+  }
+  updateScore(-2);
+  renderBoard({ dealing: false });
+  boardEl().querySelectorAll('.tile').forEach((d, i) => {
+    d.style.animation = 'none';
+    void d.offsetWidth;
+    d.style.animation = '';
+    d.classList.add('is-dealing');
+    d.style.animationDelay = `${(i % 12) * 15}ms`;
+  });
+  saveGame();
+  closeAllModals();
+  if (game.isStuck()) onStuck();
+}
+
+function doUndo() {
+  const restored = game.undo();
+  if (!restored) { showToast(I18N[currentLang].noMoreUndo); return; }
+  renderBoard({ dealing: false });
+  const board = boardEl();
+  [restored.a, restored.b].forEach((t) => {
+    const div = board.querySelector(`.tile[data-id="${t.id}"]`);
+    if (div) { div.classList.add('is-dealing'); }
+  });
+  updateStats();
+  el('btn-undo').disabled = game.history.length === 0;
+  saveGame();
+  closeAllModals();
+}
+
+function requestRestart() {
+  openModal('modal-confirm');
+}
+
+/* ---------------------------------------------------------------------
+   Win / stuck
+   --------------------------------------------------------------------- */
+
+function onWin() {
+  stopTimer();
+  clearSavedGame();
+  const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  el('win-time').textContent = `${m}:${s}`;
+  el('win-moves').textContent = game.moves;
+  el('win-score').textContent = score;
+  openModal('modal-win');
+  launchConfetti();
+}
+
+function onStuck() {
+  el('btn-stuck-undo').disabled = game.history.length === 0;
+  openModal('modal-stuck');
+}
+
+/* ---------------------------------------------------------------------
+   Modals
+   --------------------------------------------------------------------- */
+
+function openModal(id) {
+  el('modal-overlay').classList.remove('hidden');
+  document.querySelectorAll('.modal').forEach((m) => m.classList.add('hidden'));
+  el(id).classList.remove('hidden');
+}
+function closeAllModals() {
+  el('modal-overlay').classList.add('hidden');
+  document.querySelectorAll('.modal').forEach((m) => m.classList.add('hidden'));
+}
+
+/* ---------------------------------------------------------------------
+   Confetti (win modal)
+   --------------------------------------------------------------------- */
+
+function launchConfetti() {
+  const canvas = el('confetti-canvas');
+  const modal = canvas.closest('.modal');
+  canvas.width = modal.clientWidth;
+  canvas.height = modal.clientHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#f59e0b', '#fbbf24', '#e2e8f0', '#3b82f6', '#22c55e'];
+  const particles = Array.from({ length: 70 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * canvas.height * 0.5,
+    r: 3 + Math.random() * 4,
+    c: colors[Math.floor(Math.random() * colors.length)],
+    vy: 2 + Math.random() * 3,
+    vx: -1.5 + Math.random() * 3,
+    rot: Math.random() * Math.PI,
+    vr: -0.2 + Math.random() * 0.4,
+  }));
+  let frames = 0;
+  function tick() {
+    frames++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p) => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r, -p.r * 0.6, p.r * 2, p.r * 1.2);
+      ctx.restore();
+    });
+    if (frames < 220) requestAnimationFrame(tick);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  tick();
+}
+
+/* ---------------------------------------------------------------------
+   Toast
+   --------------------------------------------------------------------- */
+
+let toastTimeout = null;
+function showToast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+
+/* ---------------------------------------------------------------------
+   Persistence
+   --------------------------------------------------------------------- */
+
+function saveGame() {
+  if (!game) return;
+  try {
+    const data = {
+      typeIds: game.tiles.map((t) => t.typeId),
+      removed: game.tiles.map((t) => t.removed),
+      moves: game.moves,
+      history: game.history,
+      elapsedMs: Date.now() - game.startedAt,
+      hintsRemaining,
+      score,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) { /* storage unavailable — silently skip autosave */ }
+}
+
+function hasSavedGame() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+}
+
+function clearSavedGame() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    const g = new MahjongGame();
+    g.tiles.forEach((t, i) => {
+      t.typeId = data.typeIds[i];
+      t.removed = data.removed[i];
+    });
+    g.moves = data.moves || 0;
+    g.history = data.history || [];
+    g.startedAt = Date.now() - (data.elapsedMs || 0);
+    score = data.score || 0;
+    return { game: g, hintsRemaining: data.hintsRemaining ?? HINT_LIMIT };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Wiring
+   --------------------------------------------------------------------- */
+
+function init() {
+  applyLang();
+  initSplash();
+
+  el('lang-toggle').addEventListener('click', () => setLang(currentLang === 'pt' ? 'en' : 'pt'));
+
+  el('btn-play').addEventListener('click', () => { score = 0; startNewGame(); });
+  el('btn-continue').addEventListener('click', resumeGame);
+  el('btn-how-to-play').addEventListener('click', () => showScreen('htp-screen'));
+  el('btn-htp-back').addEventListener('click', goToMenu);
+  el('btn-htp-close').addEventListener('click', goToMenu);
+
+  el('btn-back-menu').addEventListener('click', () => { saveGame(); goToMenu(); });
+  el('btn-hint').addEventListener('click', useHint);
+  el('btn-shuffle').addEventListener('click', doShuffle);
+  el('btn-undo').addEventListener('click', doUndo);
+  el('btn-restart').addEventListener('click', requestRestart);
+
+  el('btn-confirm-yes').addEventListener('click', () => { closeAllModals(); score = 0; startNewGame(); });
+  el('btn-confirm-no').addEventListener('click', closeAllModals);
+
+  el('btn-win-again').addEventListener('click', () => { closeAllModals(); score = 0; startNewGame(); });
+  el('btn-win-menu').addEventListener('click', () => { closeAllModals(); goToMenu(); });
+
+  el('btn-stuck-shuffle').addEventListener('click', doShuffle);
+  el('btn-stuck-undo').addEventListener('click', doUndo);
+  el('btn-stuck-menu').addEventListener('click', () => { closeAllModals(); saveGame(); goToMenu(); });
+
+  window.addEventListener('resize', () => { if (game && !el('game-screen').classList.contains('hidden')) renderBoard({ dealing: false }); });
+}
+
+document.addEventListener('DOMContentLoaded', init);
