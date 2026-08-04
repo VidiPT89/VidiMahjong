@@ -123,6 +123,9 @@ class RiichiEngine {
   }
 
   canDeclareTsumo() {
+    // Tsumo (and kan, see canAnkan) require a self-draw — right after calling
+    // pon/chi on someone else's discard you owe an immediate discard, not a win.
+    if (this.turnDrawnTile === null) return false;
     const seat = this.activeSeat();
     const wc = checkWin(seat.hand, seat.melds);
     if (!wc.win) return false;
@@ -317,6 +320,8 @@ class RiichiEngine {
   }
 
   canAnkan(seatIndex) {
+    // Ankan requires a self-draw, same as tsumo — see canDeclareTsumo().
+    if (seatIndex !== this.currentSeat || this.turnDrawnTile === null) return [];
     const seat = this.seats[seatIndex];
     // Simplification: ankan after riichi is disallowed outright here (real
     // rules allow it only when it can't change the wait — narrow edge case).
@@ -398,6 +403,6 @@ class RiichiEngine {
     } else {
       [0, 1, 2, 3].forEach((i) => { payments[i] = 0; });
     }
-    return { tenpaiSeats, notenSeats, payments, dealerTenpai: tenpaiSeats.includes(this.dealerSeat) };
+    return { type: 'exhaustive', tenpaiSeats, notenSeats, payments, dealerTenpai: tenpaiSeats.includes(this.dealerSeat) };
   }
 }

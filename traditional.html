@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VidiMahjong — 4 Jogadores (Riichi)</title>
+<meta name="description" content="Mahjong tradicional de 4 jogadores (Riichi) — jogadores humanos e bots, bilingue PT/EN.">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%230a0a0f%22/><text x=%2250%22 y=%2266%22 font-size=%2258%22 text-anchor=%22middle%22 fill=%22%23f59e0b%22 font-family=%22serif%22>中</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/traditional.css?v=1">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SETUP ============ -->
+  <section id="setup-screen" class="screen menu-screen">
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <button id="lang-toggle" class="lang-toggle" aria-label="Language / Idioma">
+      <span class="lang-opt" data-lang-opt="pt">PT</span><span class="lang-opt" data-lang-opt="en">EN</span>
+      <span class="lang-pill" aria-hidden="true"></span>
+    </button>
+
+    <div class="menu-content">
+      <p class="eyebrow" data-i18n="tradSetupTitle">4 JOGADORES — RIICHI</p>
+      <h1 class="brand-logo brand-logo--menu">
+        <span class="brand-vidi">Vidi</span><span class="brand-mahjong">Mahjong</span>
+      </h1>
+      <p class="menu-subtitle" data-i18n="tradSetupSubtitle"></p>
+
+      <div class="setup-card">
+        <p class="setup-label" data-i18n="humanPlayers"></p>
+        <div class="seat-picker" id="seat-picker">
+          <button class="seat-toggle" data-seat="0" data-human="true"><span data-i18n="windE"></span></button>
+          <button class="seat-toggle" data-seat="1" data-human="true"><span data-i18n="windS"></span></button>
+          <button class="seat-toggle" data-seat="2" data-human="true"><span data-i18n="windW"></span></button>
+          <button class="seat-toggle" data-seat="3" data-human="true"><span data-i18n="windN"></span></button>
+        </div>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="btn-start-match" class="btn btn-primary" data-i18n="startMatch"></button>
+        <a class="btn btn-ghost" href="index.html" data-i18n="backToMenu"></a>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <span data-i18n="developedBy"></span>&nbsp;<strong>David Arsénio Martins</strong>
+      <span class="dot">·</span>
+      <a href="https://ividi.dev/" target="_blank" rel="noopener noreferrer">ividi.dev</a>
+      <span class="dot">·</span>
+      <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </footer>
+  </section>
+
+  <!-- ============ TABLE ============ -->
+  <section id="table-screen" class="screen table-screen hidden">
+    <header class="table-header">
+      <a href="index.html" class="icon-btn" aria-label="menu">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="table-meta">
+        <span id="round-info"></span>
+        <span class="dot">·</span>
+        <span id="dora-info"></span>
+        <span class="dot">·</span>
+        <span data-i18n="wallLeft"></span>: <span id="wall-count">70</span>
+      </div>
+      <div class="riichi-sticks" id="riichi-sticks-indicator"></div>
+    </header>
+
+    <div class="opponents-row" id="opponents-row"></div>
+
+    <div class="center-board" id="center-board"></div>
+
+    <div class="human-panel">
+      <div class="human-meta">
+        <span id="human-wind"></span>
+        <span class="dot">·</span>
+        <span id="human-points"></span>
+        <span id="human-riichi-badge" class="badge-riichi hidden" data-i18n="riichiBtn"></span>
+      </div>
+      <div class="human-melds" id="human-melds"></div>
+      <div class="human-discards" id="human-discards"></div>
+      <div class="turn-hint" id="turn-hint"></div>
+      <div class="human-hand" id="human-hand"></div>
+      <div class="human-actions" id="human-actions"></div>
+    </div>
+  </section>
+
+  <!-- ============ MODALS ============ -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+
+    <div id="modal-reaction" class="modal modal-reaction hidden">
+      <div class="modal-body">
+        <p id="reaction-tile-label"></p>
+        <div class="modal-actions" id="reaction-buttons"></div>
+      </div>
+    </div>
+
+    <div id="modal-hand-result" class="modal modal-hand-result hidden">
+      <div class="modal-body">
+        <h2 id="hand-result-title"></h2>
+        <div id="hand-result-body"></div>
+        <div class="modal-actions">
+          <button id="btn-next-hand" class="btn btn-primary" data-i18n="nextHand"></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-match-end" class="modal modal-match-end hidden">
+      <div class="modal-body">
+        <h2 data-i18n="matchEndTitle"></h2>
+        <p class="standings-title" data-i18n="finalStandings"></p>
+        <div id="final-standings"></div>
+        <div class="modal-actions">
+          <a class="btn btn-primary" href="traditional.html" data-i18n="startMatch"></a>
+          <a class="btn btn-ghost" href="index.html" data-i18n="backToMenu"></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="js/i18n.js?v=2"></script>
+<script src="js/tiles-data.js?v=2"></script>
+<script src="js/traditional/tiles.js?v=1"></script>
+<script src="js/traditional/hand-eval.js?v=1"></script>
+<script src="js/traditional/scoring.js?v=1"></script>
+<script src="js/traditional/yaku.js?v=1"></script>
+<script src="js/traditional/engine.js?v=1"></script>
+<script src="js/traditional/bot.js?v=1"></script>
+<script src="js/traditional/local-match.js?v=1"></script>
+<script src="js/traditional/ui.js?v=1"></script>
+</body>
+</html>
