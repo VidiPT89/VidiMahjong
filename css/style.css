@@ -161,7 +161,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
    ====================================================================== */
 
 .menu-screen {
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
   animation: fadeIn .5s var(--ease);
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -185,7 +186,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .menu-content {
   position: relative; z-index: 2;
   display: flex; flex-direction: column; align-items: center; text-align: center;
-  margin-top: -1rem;
+  margin: 3.5rem 0 4rem;
+  flex-shrink: 0;
 }
 .eyebrow {
   font-family: var(--font-mono); color: var(--accent);
@@ -197,20 +199,24 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   margin: .7rem 0 0; font-size: .92rem;
 }
 
-.menu-tiles-deco { position: relative; width: 100%; height: 90px; margin-top: 1.4rem; }
-.deco-tile {
-  position: absolute; width: 56px; height: 76px; border-radius: 8px;
-  background: linear-gradient(160deg, #fdf8ec, #eee0c0 60%, #ddcda0);
-  box-shadow: 0 12px 24px rgba(0,0,0,.45);
-  left: 50%; top: 0;
-  animation: decoFloat 4.5s ease-in-out infinite;
+.difficulty-picker { margin-top: 1.6rem; display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.difficulty-label {
+  font-family: var(--font-mono); color: var(--text-faint);
+  letter-spacing: .1em; font-size: .68rem; text-transform: uppercase; margin: 0;
 }
-.deco-tile--1 { transform: translateX(calc(-50% - 46px)) rotate(-8deg); animation-delay: 0s; }
-.deco-tile--2 { transform: translateX(-50%) translateY(-10px); animation-delay: .3s; z-index: 2; }
-.deco-tile--3 { transform: translateX(calc(-50% + 46px)) rotate(8deg); animation-delay: .6s; }
-@keyframes decoFloat { 0%, 100% { margin-top: 0; } 50% { margin-top: -10px; } }
+.difficulty-options {
+  display: flex; background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px; gap: 2px;
+}
+.difficulty-option {
+  font-family: var(--font-mono); font-size: .78rem; font-weight: 700;
+  color: var(--text-faint); background: transparent; border: none; cursor: pointer;
+  padding: .45rem 1rem; border-radius: 999px; transition: background .2s, color .2s;
+}
+.difficulty-option:hover { color: var(--text); }
+.difficulty-option.active { background: var(--accent); color: #14100a; }
 
-.menu-buttons { display: flex; flex-direction: column; gap: .8rem; margin-top: 2rem; width: min(320px, 80vw); }
+.menu-buttons { display: flex; flex-direction: column; gap: .8rem; margin-top: 1.6rem; width: min(320px, 80vw); }
 
 .btn {
   font-family: var(--font-mono); font-weight: 700; font-size: .92rem;
@@ -313,7 +319,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 
 .board-wrap {
   flex: 1; width: 100%; overflow: auto; position: relative;
-  display: flex; align-items: flex-start; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: safe center;
   padding: 2rem 1rem 3rem;
 }
 .board {
@@ -456,6 +462,23 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   .game-stats { order: 3; width: 100%; justify-content: center; }
   .game-actions { margin-left: 0; }
   .modal-stats { flex-direction: row; }
+
+  .menu-content { margin: 1.6rem 0 2rem; }
+  .difficulty-picker { margin-top: 1rem; }
+  .menu-buttons { margin-top: 1.2rem; gap: .6rem; }
+}
+
+@media (max-height: 700px) {
+  .menu-content { margin: 3.4rem 0 1rem; }
+  .difficulty-picker { margin-top: .8rem; }
+  .menu-buttons { margin-top: 1rem; gap: .5rem; }
+}
+
+/* Below this the fixed-position footer can collide with a vertically
+   centered menu-content block that's still taller than the viewport —
+   drop the credits so the actual buttons stay unobstructed. */
+@media (max-height: 460px) {
+  .menu-screen .app-footer { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

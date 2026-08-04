@@ -181,6 +181,25 @@ function buildShuffledPairUnits() {
   return units;
 }
 
+/** Easy mode's pool: numbered suit tiles only (27 types x4 = 108), no
+ *  winds/dragons/bonus tiles to memorize the positions of. */
+function buildEasyPairUnits() {
+  const units = [];
+  TILE_TYPES.filter((t) => t.category === 'suit')
+    .forEach((t) => {
+      units.push([t.id, t.id]);
+      units.push([t.id, t.id]);
+    });
+  shuffleArray(units);
+  units.forEach((unit) => { if (Math.random() < 0.5) unit.reverse(); });
+  return units;
+}
+
+/** Picks the right pair-unit pool for a fresh deal at the given difficulty. */
+function buildPairUnitsForDifficulty(difficulty) {
+  return difficulty === 'easy' ? buildEasyPairUnits() : buildShuffledPairUnits();
+}
+
 /** Builds matching pair-units from whatever type inventory is passed in
  *  (e.g. the types still on the board when reshuffling mid-game). */
 function buildPairUnitsFromInventory(typeCounts) {

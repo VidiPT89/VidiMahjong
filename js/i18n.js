@@ -17,6 +17,11 @@ const I18N = {
     traditionalMode: '4 Jogadores (Riichi)',
     footerRights: 'Todos os direitos reservados.',
 
+    difficultyLabel: 'Dificuldade',
+    difficultyEasy: 'Fácil',
+    difficultyMedium: 'Médio',
+    difficultyHard: 'Difícil',
+
     back: 'Voltar',
     menu: 'Menu',
     time: 'Tempo',
@@ -137,6 +142,11 @@ const I18N = {
     continueGame: 'Continue Game',
     traditionalMode: '4-Player (Riichi)',
     footerRights: 'All rights reserved.',
+
+    difficultyLabel: 'Difficulty',
+    difficultyEasy: 'Easy',
+    difficultyMedium: 'Medium',
+    difficultyHard: 'Hard',
 
     back: 'Back',
     menu: 'Menu',
