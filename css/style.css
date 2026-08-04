@@ -20,7 +20,7 @@
 
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-body: Arial, Helvetica, sans-serif;
-  --font-tile: "Songti SC", "STSong", "Noto Serif SC", "PMingLiU", Georgia, serif;
+  --font-tile: "PingFang SC", "Heiti SC", "Songti SC", "STSong", "Microsoft YaHei", "SimSun", "Noto Sans CJK SC", "Noto Serif SC", "WenQuanYi Micro Hei", "Droid Sans Fallback", "PMingLiU", "Apple SD Gothic Neo", Georgia, serif;
 
   --tile-w: 54px;
   --tile-h: 74px;
