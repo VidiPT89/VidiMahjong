@@ -15,6 +15,10 @@ function applyLang() {
     const key = node.getAttribute('data-i18n');
     if (dict[key] !== undefined) node.textContent = dict[key];
   });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+    const key = node.getAttribute('data-i18n-placeholder');
+    if (dict[key] !== undefined) node.placeholder = dict[key];
+  });
   const toggle = el('lang-toggle');
   toggle.setAttribute('data-lang', currentLang);
   toggle.querySelectorAll('.lang-opt').forEach((opt) => {
@@ -30,6 +34,15 @@ function t(key) { return I18N[currentLang][key] || key; }
    --------------------------------------------------------------------- */
 
 function initSetup() {
+  el('btn-mode-local').addEventListener('click', () => {
+    el('mode-select-screen').classList.add('hidden');
+    el('setup-screen').classList.remove('hidden');
+  });
+  el('btn-back-mode-1').addEventListener('click', () => {
+    el('setup-screen').classList.add('hidden');
+    el('mode-select-screen').classList.remove('hidden');
+  });
+
   el('seat-picker').querySelectorAll('.seat-toggle').forEach((btn) => {
     const seat = Number(btn.dataset.seat);
     btn.classList.toggle('is-human', isHumanArr[seat]);
@@ -203,7 +216,23 @@ function renderHumanActions(isMyDiscardTurn, seat) {
    Reaction modal
    --------------------------------------------------------------------- */
 
+// Two human seats can simultaneously have a valid reaction to the same
+// discard (e.g. a double ron) — each fires its own 'await-human-reaction'
+// event. Queue them and show one modal at a time instead of the later one
+// silently clobbering the earlier prompt.
+let reactionQueue = [];
+let reactionModalOpen = false;
+
 function handleAwaitHumanReaction(event) {
+  reactionQueue.push(event);
+  if (!reactionModalOpen) showNextReactionPrompt();
+}
+
+function showNextReactionPrompt() {
+  const event = reactionQueue.shift();
+  if (!event) { reactionModalOpen = false; return; }
+  reactionModalOpen = true;
+
   viewSeat = event.seatIndex;
   renderAll();
   const g = match.engine;
@@ -215,7 +244,7 @@ function handleAwaitHumanReaction(event) {
     const btn = document.createElement('button');
     btn.className = primary ? 'btn btn-primary' : 'btn btn-ghost';
     btn.textContent = label;
-    btn.addEventListener('click', () => { closeAllModals(); onClick(); });
+    btn.addEventListener('click', () => { closeAllModals(); onClick(); showNextReactionPrompt(); });
     buttonsEl.appendChild(btn);
   };
 

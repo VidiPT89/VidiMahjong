@@ -134,6 +134,11 @@ class RiichiEngine {
   }
 
   declareTsumo() {
+    // Authoritative guard: a client (bot, human, or a malicious/buggy
+    // network peer) could call this on a non-winning hand. checkWin()
+    // returns {win:false} with no `decompositions`, which bestYakuResult()
+    // would crash on — so re-validate here rather than trusting the caller.
+    if (!this.canDeclareTsumo()) return null;
     const seat = this.activeSeat();
     const wc = checkWin(seat.hand, seat.melds);
     const result = this.evaluateWin(seat, wc, this.turnDrawnTile, 'tsumo');
@@ -230,6 +235,11 @@ class RiichiEngine {
    * Applies standard priority: ron > pon/kan > chi > nothing.
    */
   resolveReactions(responses) {
+    // Re-validate every claimed action against freshly-computed legality —
+    // never trust `responses` at face value (it may come straight from an
+    // untrusted network client in online play).
+    const summary = this.getReactionSummary();
+
     const ronSeats = Object.keys(responses).map(Number).filter((i) => responses[i] === 'ron' && this.canRon(i));
     if (ronSeats.length > 0) {
       const winners = ronSeats.map((i) => {
@@ -247,14 +257,21 @@ class RiichiEngine {
       if (responses[i] === 'pass') this.seats[Number(i)].furitenUntilNextDraw = this.canRon(Number(i)) || this.seats[Number(i)].furitenUntilNextDraw;
     });
 
-    const ponSeat = Object.keys(responses).map(Number).find((i) => responses[i] === 'pon' || responses[i] === 'kan');
+    const ponSeat = Object.keys(responses).map(Number).find((i) => (
+      (responses[i] === 'pon' && summary[i] && summary[i].pon)
+      || (responses[i] === 'kan' && summary[i] && summary[i].kan)
+    ));
     if (ponSeat !== undefined) {
       this.breakAllIppatsu();
       if (responses[ponSeat] === 'kan') return this.callDaiminkan(ponSeat);
       return this.callPon(ponSeat);
     }
 
-    const chiSeat = Object.keys(responses).map(Number).find((i) => responses[i] && responses[i].chi);
+    const chiSeat = Object.keys(responses).map(Number).find((i) => (
+      responses[i] && responses[i].chi && summary[i] && summary[i].chi.some(
+        (pair) => pair[0] === responses[i].chi[0] && pair[1] === responses[i].chi[1],
+      )
+    ));
     if (chiSeat !== undefined) {
       this.breakAllIppatsu();
       return this.callChi(chiSeat, responses[chiSeat].chi);
@@ -331,6 +348,7 @@ class RiichiEngine {
 
   callAnkan(seatIndex, type) {
     if (this.kanCount >= 4) return null;
+    if (!this.canAnkan(seatIndex).includes(type)) return null;
     const seat = this.seats[seatIndex];
     for (let n = 0; n < 4; n++) seat.hand.splice(seat.hand.indexOf(type), 1);
     seat.melds.push({ kind: 'kan', tiles: [type, type, type, type], concealed: true, calledFrom: null });
@@ -377,17 +395,23 @@ class RiichiEngine {
   }
 
   canDeclareRiichi(seatIndex) {
+    // Riichi requires it be this seat's own turn, right after their draw
+    // (same self-draw requirement as tsumo/ankan) — matters once an
+    // untrusted client can call this directly (online play).
+    if (seatIndex !== this.currentSeat || this.turnDrawnTile === null) return false;
     const seat = this.seats[seatIndex];
     return seat.melds.length === 0 && !seat.riichi && this.liveWall.length >= 4
       && seat.points >= 1000 && isTenpaiWithMelds(seat.hand.filter((t) => t !== this.turnDrawnTile).concat([this.turnDrawnTile]), []);
   }
 
   declareRiichi(seatIndex) {
+    if (!this.canDeclareRiichi(seatIndex)) return false;
     const seat = this.seats[seatIndex];
     seat.riichi = true;
     seat.doubleRiichi = seat.discards.length === 0;
     seat.justDeclaredRiichi = true;
     seat.points -= 1000;
+    return true;
   }
 
   buildExhaustiveDraw() {
