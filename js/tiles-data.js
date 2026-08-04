@@ -61,10 +61,14 @@ const CIRCLE_COLORS = ['#1d5fa8', '#c0392b', '#1f7a4d'];
 function buildTileTypes() {
   const types = [];
 
+  // Standard Mahjong notation (m=man/characters, s=sou/bamboo, p=pin/circle)
+  // — using suit[0] here would collide, since "characters" and "circle"
+  // both start with "c".
+  const SUIT_PREFIX = { characters: 'm', bamboo: 's', circle: 'p' };
   ['characters', 'bamboo', 'circle'].forEach((suit) => {
     for (let rank = 1; rank <= 9; rank++) {
       types.push({
-        id: `${suit[0]}${rank}`,
+        id: `${SUIT_PREFIX[suit]}${rank}`,
         category: 'suit',
         suit,
         rank,
