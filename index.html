@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VidiMahjong — Mahjong Solitário</title>
+<meta name="description" content="Mahjong Solitário moderno e animado — combine pares, limpe o tabuleiro, bilingue PT/EN.">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%230a0a0f%22/><text x=%2250%22 y=%2266%22 font-size=%2258%22 text-anchor=%22middle%22 fill=%22%23f59e0b%22 font-family=%22serif%22>筒</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SPLASH ============ -->
+  <section id="splash-screen" class="screen splash-screen">
+    <div class="bg-glow" aria-hidden="true"></div>
+    <div class="splash-tiles" id="splash-tiles" aria-hidden="true"></div>
+
+    <div class="splash-content">
+      <h1 class="brand-logo">
+        <span class="brand-vidi">Vidi</span><span class="brand-mahjong">Mahjong</span>
+      </h1>
+      <p class="splash-tagline" data-i18n="menuSubtitle"></p>
+
+      <div class="splash-credit">
+        <p class="credit-line" data-i18n="developedBy"></p>
+        <p class="credit-name">David Arsénio Martins</p>
+        <div class="credit-links">
+          <a href="https://ividi.dev/" target="_blank" rel="noopener noreferrer">ividi.dev</a>
+          <span class="dot">·</span>
+          <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">github.com/VidiPT89</a>
+        </div>
+      </div>
+    </div>
+
+    <button id="splash-skip" class="splash-skip" data-i18n="tapToContinue"></button>
+  </section>
+
+  <!-- ============ MENU ============ -->
+  <section id="menu-screen" class="screen menu-screen hidden">
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <button id="lang-toggle" class="lang-toggle" aria-label="Language / Idioma">
+      <span class="lang-opt" data-lang-opt="pt">PT</span><span class="lang-opt" data-lang-opt="en">EN</span>
+      <span class="lang-pill" aria-hidden="true"></span>
+    </button>
+
+    <div class="menu-content">
+      <p class="eyebrow" data-i18n="menuTag"></p>
+      <h1 class="brand-logo brand-logo--menu">
+        <span class="brand-vidi">Vidi</span><span class="brand-mahjong">Mahjong</span>
+      </h1>
+      <p class="menu-subtitle" data-i18n="menuSubtitle"></p>
+
+      <div class="menu-tiles-deco" aria-hidden="true">
+        <div class="deco-tile deco-tile--1"></div>
+        <div class="deco-tile deco-tile--2"></div>
+        <div class="deco-tile deco-tile--3"></div>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="btn-continue" class="btn btn-secondary hidden" data-i18n="continueGame"></button>
+        <button id="btn-play" class="btn btn-primary" data-i18n="play"></button>
+        <button id="btn-how-to-play" class="btn btn-ghost" data-i18n="howToPlay"></button>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <span data-i18n="developedBy"></span>&nbsp;<strong>David Arsénio Martins</strong>
+      <span class="dot">·</span>
+      <a href="https://ividi.dev/" target="_blank" rel="noopener noreferrer">ividi.dev</a>
+      <span class="dot">·</span>
+      <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </footer>
+  </section>
+
+  <!-- ============ HOW TO PLAY ============ -->
+  <section id="htp-screen" class="screen htp-screen hidden">
+    <header class="sub-header">
+      <button id="btn-htp-back" class="icon-btn" aria-label="back">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 data-i18n="htpTitle"></h2>
+      <span class="sub-header-spacer"></span>
+    </header>
+
+    <div class="htp-body">
+      <p class="htp-intro" data-i18n="htpIntro"></p>
+
+      <section class="htp-section">
+        <h3 data-i18n="htpFreeTitle"></h3>
+        <p data-i18n="htpFreeBody"></p>
+        <div class="htp-diagram">
+          <div class="htp-example">
+            <div class="mini-board mini-board--covered">
+              <div class="mini-tile mini-tile--base"></div>
+              <div class="mini-tile mini-tile--top"></div>
+            </div>
+            <p class="mini-label" data-i18n="htpCoveredLabel"></p>
+            <p class="mini-desc" data-i18n="htpCoveredDesc"></p>
+          </div>
+          <div class="htp-example">
+            <div class="mini-board mini-board--blocked">
+              <div class="mini-tile mini-tile--side"></div>
+              <div class="mini-tile mini-tile--center is-blocked"></div>
+              <div class="mini-tile mini-tile--side"></div>
+            </div>
+            <p class="mini-label" data-i18n="htpBlockedLabel"></p>
+            <p class="mini-desc" data-i18n="htpBlockedDesc"></p>
+          </div>
+          <div class="htp-example">
+            <div class="mini-board mini-board--free">
+              <div class="mini-tile mini-tile--center is-free"></div>
+              <div class="mini-tile mini-tile--side"></div>
+            </div>
+            <p class="mini-label" data-i18n="htpFreeLabel"></p>
+            <p class="mini-desc" data-i18n="htpFreeDesc"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="htp-section">
+        <h3 data-i18n="htpMatchTitle"></h3>
+        <p data-i18n="htpMatchBody"></p>
+      </section>
+
+      <section class="htp-section">
+        <h3 data-i18n="htpToolsTitle"></h3>
+        <ul class="htp-tools">
+          <li><strong data-i18n="hint"></strong> — <span data-i18n="htpHintBody"></span></li>
+          <li><strong data-i18n="shuffle"></strong> — <span data-i18n="htpShuffleBody"></span></li>
+          <li><strong data-i18n="undo"></strong> — <span data-i18n="htpUndoBody"></span></li>
+        </ul>
+      </section>
+
+      <button id="btn-htp-close" class="btn btn-primary htp-close" data-i18n="htpCloseButton"></button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game-screen" class="screen game-screen hidden">
+    <header class="game-header">
+      <button id="btn-back-menu" class="icon-btn" aria-label="menu">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+
+      <div class="game-stats">
+        <div class="stat"><span class="stat-label" data-i18n="time"></span><span class="stat-value" id="stat-time">00:00</span></div>
+        <div class="stat"><span class="stat-label" data-i18n="moves"></span><span class="stat-value" id="stat-moves">0</span></div>
+        <div class="stat"><span class="stat-label" data-i18n="score"></span><span class="stat-value" id="stat-score">0</span></div>
+        <div class="stat"><span class="stat-label" data-i18n="left"></span><span class="stat-value" id="stat-left">144</span></div>
+      </div>
+
+      <div class="game-actions">
+        <button id="btn-hint" class="icon-btn" data-tip-i18n="hint">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.472V16h8v-2.528A6 6 0 0012 3z"/></svg>
+          <span id="hint-count" class="badge"></span>
+        </button>
+        <button id="btn-shuffle" class="icon-btn" data-tip-i18n="shuffle">
+          <svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </button>
+        <button id="btn-undo" class="icon-btn" data-tip-i18n="undo">
+          <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-1"/></svg>
+        </button>
+        <button id="btn-restart" class="icon-btn" data-tip-i18n="restart">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 3 6.7M3 12v6h6"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+    </div>
+  </section>
+
+  <!-- ============ MODALS ============ -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+
+    <div id="modal-win" class="modal modal-win hidden">
+      <canvas id="confetti-canvas"></canvas>
+      <div class="modal-body">
+        <h2 data-i18n="winTitle"></h2>
+        <p data-i18n="winSubtitle"></p>
+        <div class="modal-stats">
+          <div><span data-i18n="finalTime"></span><strong id="win-time"></strong></div>
+          <div><span data-i18n="finalMoves"></span><strong id="win-moves"></strong></div>
+          <div><span data-i18n="finalScore"></span><strong id="win-score"></strong></div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-win-again" class="btn btn-primary" data-i18n="playAgain"></button>
+          <button id="btn-win-menu" class="btn btn-ghost" data-i18n="backToMenu"></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-stuck" class="modal modal-stuck hidden">
+      <div class="modal-body">
+        <h2 data-i18n="stuckTitle"></h2>
+        <p data-i18n="stuckSubtitle"></p>
+        <div class="modal-actions">
+          <button id="btn-stuck-shuffle" class="btn btn-primary" data-i18n="shuffle"></button>
+          <button id="btn-stuck-undo" class="btn btn-ghost" data-i18n="undo"></button>
+          <button id="btn-stuck-menu" class="btn btn-ghost" data-i18n="backToMenu"></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-confirm" class="modal modal-confirm hidden">
+      <div class="modal-body">
+        <p data-i18n="restartConfirm"></p>
+        <div class="modal-actions">
+          <button id="btn-confirm-yes" class="btn btn-primary" data-i18n="confirmYes"></button>
+          <button id="btn-confirm-no" class="btn btn-ghost" data-i18n="confirmNo"></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/tiles-data.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

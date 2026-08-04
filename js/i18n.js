@@ -1,0 +1,143 @@
+/* Bilingual UI copy (European Portuguese / English). */
+
+const I18N = {
+  pt: {
+    metaTitle: 'VidiMahjong — Mahjong Solitário',
+    loading: 'A preparar o tabuleiro…',
+    tapToContinue: 'Toque para continuar',
+    developedBy: 'Desenvolvido por',
+    authorName: 'David Arsénio Martins',
+
+    menuTag: 'MAHJONG SOLITÁRIO',
+    menuTitle: 'VidiMahjong',
+    menuSubtitle: 'Combine pares. Limpe o tabuleiro. Relaxe.',
+    play: 'Jogar',
+    howToPlay: 'Como Jogar',
+    continueGame: 'Continuar Jogo',
+    footerRights: 'Todos os direitos reservados.',
+
+    back: 'Voltar',
+    menu: 'Menu',
+    time: 'Tempo',
+    moves: 'Jogadas',
+    score: 'Pontos',
+    left: 'Restantes',
+    hint: 'Dica',
+    shuffle: 'Baralhar',
+    undo: 'Desfazer',
+    restart: 'Reiniciar',
+    restartConfirm: 'Recomeçar este jogo? O progresso atual perde-se.',
+    confirmYes: 'Sim',
+    confirmNo: 'Cancelar',
+
+    winTitle: 'Vitória!',
+    winSubtitle: 'Limpaste o tabuleiro por completo.',
+    stuckTitle: 'Sem jogadas disponíveis',
+    stuckSubtitle: 'Já não há pares livres para combinar. Podes baralhar as fichas restantes ou desfazer a última jogada.',
+    playAgain: 'Jogar Novamente',
+    backToMenu: 'Voltar ao Menu',
+    finalTime: 'Tempo final',
+    finalMoves: 'Jogadas',
+    finalScore: 'Pontuação',
+    noHintsLeft: 'Sem mais dicas disponíveis neste jogo.',
+    noMoreUndo: 'Não há jogadas para desfazer.',
+    shuffleImpossible: 'Não foi possível encontrar um baralhar resolúvel. Tenta desfazer.',
+
+    htpTitle: 'Como Jogar',
+    htpIntro: 'O Mahjong Solitário joga-se com 144 fichas empilhadas em pirâmide. O objetivo é remover todas as fichas do tabuleiro, combinando-as duas a duas.',
+    htpFreeTitle: '1. A regra da ficha "livre"',
+    htpFreeBody: 'Só podes selecionar uma ficha se ela estiver livre: nada por cima dela, e pelo menos um dos lados (esquerdo ou direito) completamente desimpedido.',
+    htpCoveredLabel: 'Coberta',
+    htpCoveredDesc: 'Tem uma ficha por cima — não pode ser jogada.',
+    htpBlockedLabel: 'Bloqueada',
+    htpBlockedDesc: 'Livre de fichas por cima, mas presa dos dois lados — não pode ser jogada.',
+    htpFreeLabel: 'Livre',
+    htpFreeDesc: 'Sem nada por cima e com um dos lados aberto — pode ser jogada.',
+    htpMatchTitle: '2. Como combinar fichas',
+    htpMatchBody: 'Toca em duas fichas livres do mesmo tipo para as remover. As Flores e as Estações são especiais: qualquer Flor combina com qualquer outra Flor, e qualquer Estação com qualquer outra Estação — não precisam de ser iguais.',
+    htpToolsTitle: '3. Ferramentas de apoio',
+    htpHintBody: 'realça um par jogável no tabuleiro. Tens um número limitado por jogo.',
+    htpShuffleBody: 'reorganiza as fichas restantes, mantendo sempre uma solução possível, caso fiques sem jogadas.',
+    htpUndoBody: 'repõe o último par removido.',
+    htpCloseButton: 'Entendido',
+
+    langToggleLabel: 'Idioma',
+  },
+
+  en: {
+    metaTitle: 'VidiMahjong — Mahjong Solitaire',
+    loading: 'Setting up the board…',
+    tapToContinue: 'Tap to continue',
+    developedBy: 'Developed by',
+    authorName: 'David Arsénio Martins',
+
+    menuTag: 'MAHJONG SOLITAIRE',
+    menuTitle: 'VidiMahjong',
+    menuSubtitle: 'Match pairs. Clear the board. Unwind.',
+    play: 'Play',
+    howToPlay: 'How to Play',
+    continueGame: 'Continue Game',
+    footerRights: 'All rights reserved.',
+
+    back: 'Back',
+    menu: 'Menu',
+    time: 'Time',
+    moves: 'Moves',
+    score: 'Score',
+    left: 'Left',
+    hint: 'Hint',
+    shuffle: 'Shuffle',
+    undo: 'Undo',
+    restart: 'Restart',
+    restartConfirm: 'Restart this game? Current progress will be lost.',
+    confirmYes: 'Yes',
+    confirmNo: 'Cancel',
+
+    winTitle: 'You Win!',
+    winSubtitle: 'You cleared the entire board.',
+    stuckTitle: 'No Moves Available',
+    stuckSubtitle: "There are no free matching pairs left. You can shuffle the remaining tiles or undo the last move.",
+    playAgain: 'Play Again',
+    backToMenu: 'Back to Menu',
+    finalTime: 'Final time',
+    finalMoves: 'Moves',
+    finalScore: 'Score',
+    noHintsLeft: 'No more hints available this game.',
+    noMoreUndo: 'Nothing to undo.',
+    shuffleImpossible: "Couldn't find a solvable shuffle. Try undo instead.",
+
+    htpTitle: 'How to Play',
+    htpIntro: 'Mahjong Solitaire is played with 144 tiles stacked into a pyramid. The goal is to clear the whole board by matching tiles two at a time.',
+    htpFreeTitle: '1. The "free tile" rule',
+    htpFreeBody: 'You can only select a tile if it is free: nothing on top of it, and at least one side (left or right) completely open.',
+    htpCoveredLabel: 'Covered',
+    htpCoveredDesc: 'Has a tile stacked on top — cannot be played.',
+    htpBlockedLabel: 'Blocked',
+    htpBlockedDesc: 'Nothing on top, but boxed in on both sides — cannot be played.',
+    htpFreeLabel: 'Free',
+    htpFreeDesc: 'Nothing on top and one side open — can be played.',
+    htpMatchTitle: '2. Matching tiles',
+    htpMatchBody: "Tap two free tiles of the same type to remove them. Flowers and Seasons are special: any Flower matches any other Flower, and any Season matches any other Season — they don't need to be identical.",
+    htpToolsTitle: '3. Helper tools',
+    htpHintBody: 'highlights one playable pair on the board. You get a limited number per game.',
+    htpShuffleBody: 'rearranges the remaining tiles while always keeping a possible solution, in case you run out of moves.',
+    htpUndoBody: 'brings back the last pair you removed.',
+    htpCloseButton: 'Got it',
+
+    langToggleLabel: 'Language',
+  },
+};
+
+const DEFAULT_LANG = 'pt';
+
+function getStoredLang() {
+  try {
+    const stored = localStorage.getItem('vidimahjong-lang');
+    if (stored && I18N[stored]) return stored;
+  } catch (e) { /* localStorage unavailable */ }
+  return DEFAULT_LANG;
+}
+
+function setStoredLang(lang) {
+  try { localStorage.setItem('vidimahjong-lang', lang); } catch (e) { /* ignore */ }
+}
