@@ -100,6 +100,26 @@ const I18N = {
     finalStandings: 'Classificação Final',
     riichiSticksLabel: 'Paus de Riichi na mesa',
     noYakuWarning: 'Esta mão ainda não tem yaku — não é possível declarar vitória.',
+
+    // ---- Online mode ----
+    playLocal: 'Jogar Localmente',
+    playOnline: 'Jogar Online',
+    onlineIntro: 'Cria uma sala e partilha o código, ou entra numa sala existente.',
+    serverUrlLabel: 'Endereço do servidor',
+    createRoom: 'Criar Sala',
+    joinRoom: 'Entrar em Sala',
+    roomCodeLabel: 'Código da sala',
+    roomCodePlaceholder: 'ex: A7K2P',
+    yourRoomCode: 'Código da tua sala',
+    waitingForPlayers: 'À espera de jogadores…',
+    startOnlineMatch: 'Começar Partida',
+    connecting: 'A ligar…',
+    connectionError: 'Não foi possível ligar ao servidor. Verifica o endereço.',
+    roomNotFound: 'Sala não encontrada.',
+    roomFull: 'Sala cheia ou já começou.',
+    playerConnected: 'ligado',
+    playerWaiting: 'a aguardar',
+    onlineSeatFillNote: 'Lugares vazios são preenchidos por bots ao começar.',
   },
 
   en: {
@@ -201,6 +221,26 @@ const I18N = {
     finalStandings: 'Final Standings',
     riichiSticksLabel: 'Riichi sticks on the table',
     noYakuWarning: 'This hand has no yaku yet — you cannot declare a win.',
+
+    // ---- Online mode ----
+    playLocal: 'Play Locally',
+    playOnline: 'Play Online',
+    onlineIntro: 'Create a room and share the code, or join an existing room.',
+    serverUrlLabel: 'Server address',
+    createRoom: 'Create Room',
+    joinRoom: 'Join Room',
+    roomCodeLabel: 'Room code',
+    roomCodePlaceholder: 'e.g. A7K2P',
+    yourRoomCode: 'Your room code',
+    waitingForPlayers: 'Waiting for players…',
+    startOnlineMatch: 'Start Match',
+    connecting: 'Connecting…',
+    connectionError: "Couldn't connect to the server. Check the address.",
+    roomNotFound: 'Room not found.',
+    roomFull: 'Room full or already started.',
+    playerConnected: 'connected',
+    playerWaiting: 'waiting',
+    onlineSeatFillNote: 'Empty seats are filled with bots once the match starts.',
   },
 };
 

@@ -20,6 +20,7 @@ class LocalMatch {
     this.dealerSeat = 0;
     this.matchOver = false;
     this._pendingReactionResponses = {};
+    this._pendingHumanSeats = [];
     this._awaitingHumanReaction = false;
     this._gen = 0;
     this._lastProgressAt = Date.now();
@@ -136,14 +137,14 @@ class LocalMatch {
     const g = this.engine;
     const summary = g.getReactionSummary();
     const responses = {};
-    let humanPending = null;
+    const humanPending = []; // multiple human seats can simultaneously have a valid reaction (e.g. double ron) — all must be asked, not just one
 
     Object.keys(summary).forEach((i) => {
       const seatIndex = Number(i);
       const opts = summary[i];
       if (this.isHuman[seatIndex]) {
         const hasAny = opts.ron || opts.pon || opts.kan || opts.chi.length > 0;
-        if (hasAny) { humanPending = { seatIndex, opts }; return; }
+        if (hasAny) { humanPending.push({ seatIndex, opts }); return; }
         responses[i] = 'pass';
         return;
       }
@@ -153,10 +154,11 @@ class LocalMatch {
       responses[i] = decision;
     });
 
-    if (humanPending) {
+    if (humanPending.length > 0) {
       this._pendingReactionResponses = responses;
+      this._pendingHumanSeats = humanPending.map((h) => h.seatIndex);
       this._awaitingHumanReaction = true;
-      this.emit({ type: 'await-human-reaction', ...humanPending });
+      humanPending.forEach((h) => this.emit({ type: 'await-human-reaction', seatIndex: h.seatIndex, opts: h.opts }));
       return;
     }
 
@@ -193,7 +195,13 @@ class LocalMatch {
     this.scheduleAfter(80, () => this.tick());
   }
 
-  humanDeclareTsumo() { this.engine.declareTsumo(); this.finishHand(); }
+  humanDeclareTsumo() {
+    if (!this.currentSeatIsHuman() || !this.engine.declareTsumo()) {
+      console.warn('humanDeclareTsumo ignored: not a valid tsumo right now');
+      return;
+    }
+    this.finishHand();
+  }
 
   humanDeclareRiichi() {
     this.engine.declareRiichi(this.engine.currentSeat);
@@ -201,15 +209,25 @@ class LocalMatch {
   }
 
   humanAnkan(type) {
-    this.engine.callAnkan(this.engine.currentSeat, type);
+    if (!this.currentSeatIsHuman() || !this.engine.callAnkan(this.engine.currentSeat, type)) {
+      console.warn('humanAnkan ignored: not a valid ankan right now');
+      return;
+    }
     this.emit({ type: 'kan', seat: this.engine.currentSeat });
     this.scheduleAfter(BOT_DELAY_MS, () => this.tick());
   }
 
   humanReact(seatIndex, action) {
-    const responses = { ...this._pendingReactionResponses };
+    if (!this._pendingHumanSeats || !this._pendingHumanSeats.includes(seatIndex)) {
+      console.warn('humanReact ignored: seat is not currently awaited', { seatIndex, pending: this._pendingHumanSeats });
+      return;
+    }
     if (action === 'pass' && this.engine.canRon(seatIndex)) this.engine.markPassedRon(seatIndex);
-    responses[seatIndex] = action;
+    this._pendingReactionResponses[seatIndex] = action;
+    this._pendingHumanSeats = this._pendingHumanSeats.filter((s) => s !== seatIndex);
+    if (this._pendingHumanSeats.length > 0) return; // still waiting on other human seats
+
+    const responses = this._pendingReactionResponses;
     this._pendingReactionResponses = {};
     this._awaitingHumanReaction = false;
     this.applyReactions(responses);
@@ -272,7 +290,18 @@ class LocalMatch {
       this.handNumber += 1;
     }
 
-    if (this.handNumber > 4) { this.matchOver = true; this.emit({ type: 'match-end' }); return; }
+    if (this.handNumber > 4) { this.matchOver = true; this.stop(); this.emit({ type: 'match-end' }); return; }
     this.startHand();
+  }
+
+  /** Clears the watchdog interval and invalidates any pending scheduled
+   *  action (via the generation counter), so the match stops auto-advancing.
+   *  Call when a match ends normally or is abandoned early (e.g. a server
+   *  room closes with players still mid-hand) — otherwise an uncleared
+   *  watchdog interval, or a bot's next chained action, keeps a Node
+   *  process (or, in principle, the page) busy/leaking indefinitely. */
+  stop() {
+    if (this._watchdog) { clearInterval(this._watchdog); this._watchdog = null; }
+    this._gen++;
   }
 }

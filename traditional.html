@@ -13,14 +13,41 @@
 <body>
 <div id="app">
 
-  <!-- ============ SETUP ============ -->
-  <section id="setup-screen" class="screen menu-screen">
+  <!-- ============ MODE SELECT ============ -->
+  <section id="mode-select-screen" class="screen menu-screen">
     <div class="bg-glow" aria-hidden="true"></div>
 
     <button id="lang-toggle" class="lang-toggle" aria-label="Language / Idioma">
       <span class="lang-opt" data-lang-opt="pt">PT</span><span class="lang-opt" data-lang-opt="en">EN</span>
       <span class="lang-pill" aria-hidden="true"></span>
     </button>
+
+    <div class="menu-content">
+      <p class="eyebrow" data-i18n="tradSetupTitle">4 JOGADORES — RIICHI</p>
+      <h1 class="brand-logo brand-logo--menu">
+        <span class="brand-vidi">Vidi</span><span class="brand-mahjong">Mahjong</span>
+      </h1>
+      <p class="menu-subtitle" data-i18n="tradSetupSubtitle"></p>
+
+      <div class="menu-buttons">
+        <button id="btn-mode-local" class="btn btn-primary" data-i18n="playLocal"></button>
+        <button id="btn-mode-online" class="btn btn-secondary" data-i18n="playOnline"></button>
+        <a class="btn btn-ghost" href="index.html" data-i18n="backToMenu"></a>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <span data-i18n="developedBy"></span>&nbsp;<strong>David Arsénio Martins</strong>
+      <span class="dot">·</span>
+      <a href="https://ividi.dev/" target="_blank" rel="noopener noreferrer">ividi.dev</a>
+      <span class="dot">·</span>
+      <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </footer>
+  </section>
+
+  <!-- ============ LOCAL SETUP ============ -->
+  <section id="setup-screen" class="screen menu-screen hidden">
+    <div class="bg-glow" aria-hidden="true"></div>
 
     <div class="menu-content">
       <p class="eyebrow" data-i18n="tradSetupTitle">4 JOGADORES — RIICHI</p>
@@ -41,17 +68,48 @@
 
       <div class="menu-buttons">
         <button id="btn-start-match" class="btn btn-primary" data-i18n="startMatch"></button>
-        <a class="btn btn-ghost" href="index.html" data-i18n="backToMenu"></a>
+        <button id="btn-back-mode-1" class="btn btn-ghost" data-i18n="back"></button>
       </div>
     </div>
+  </section>
 
-    <footer class="app-footer">
-      <span data-i18n="developedBy"></span>&nbsp;<strong>David Arsénio Martins</strong>
-      <span class="dot">·</span>
-      <a href="https://ividi.dev/" target="_blank" rel="noopener noreferrer">ividi.dev</a>
-      <span class="dot">·</span>
-      <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">GitHub</a>
-    </footer>
+  <!-- ============ ONLINE LOBBY ============ -->
+  <section id="online-lobby-screen" class="screen menu-screen hidden">
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <div class="menu-content">
+      <p class="eyebrow" data-i18n="playOnline">ONLINE</p>
+      <h1 class="brand-logo brand-logo--menu">
+        <span class="brand-vidi">Vidi</span><span class="brand-mahjong">Mahjong</span>
+      </h1>
+      <p class="menu-subtitle" data-i18n="onlineIntro"></p>
+
+      <div class="setup-card" id="online-connect-card">
+        <p class="setup-label" data-i18n="serverUrlLabel"></p>
+        <input id="server-url-input" class="text-input" type="text" placeholder="wss://your-server.example.com" autocomplete="off" spellcheck="false">
+
+        <div class="online-actions">
+          <button id="btn-create-room" class="btn btn-primary" data-i18n="createRoom"></button>
+          <div class="join-row">
+            <input id="room-code-input" class="text-input text-input--code" type="text" maxlength="5" data-i18n-placeholder="roomCodePlaceholder" autocomplete="off" spellcheck="false">
+            <button id="btn-join-room" class="btn btn-secondary" data-i18n="joinRoom"></button>
+          </div>
+        </div>
+        <p class="online-status" id="online-status"></p>
+      </div>
+
+      <div class="setup-card hidden" id="online-room-card">
+        <p class="setup-label" data-i18n="yourRoomCode"></p>
+        <p class="room-code-display" id="room-code-display"></p>
+        <div class="lobby-seats" id="lobby-seats"></div>
+        <p class="online-note" data-i18n="onlineSeatFillNote"></p>
+        <button id="btn-start-online" class="btn btn-primary hidden" data-i18n="startOnlineMatch"></button>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="btn-back-mode-2" class="btn btn-ghost" data-i18n="back"></button>
+      </div>
+    </div>
   </section>
 
   <!-- ============ TABLE ============ -->
@@ -136,5 +194,6 @@
 <script src="js/traditional/bot.js?v=1"></script>
 <script src="js/traditional/local-match.js?v=1"></script>
 <script src="js/traditional/ui.js?v=1"></script>
+<script src="js/traditional/online.js?v=1"></script>
 </body>
 </html>
