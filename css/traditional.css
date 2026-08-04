@@ -42,7 +42,10 @@
 .seat-toggle.is-human::after { content: ""; }
 
 /* ---- Table screen ---- */
-.table-screen { background: var(--bg); }
+/* .screen centers its children by default (fine for menus) — the table
+   needs its rows to stretch full-width instead, or they shrink-wrap to
+   their own content and everything inside gets crushed together. */
+.table-screen { background: var(--bg); align-items: stretch; }
 .table-header {
   width: 100%; display: flex; align-items: center; gap: .8rem;
   padding: .6rem 1rem; border-bottom: 1px solid var(--border); background: var(--bg-panel);
@@ -51,7 +54,7 @@
 .table-meta { display: flex; gap: .5rem; align-items: center; margin: 0 auto; }
 .riichi-sticks { font-size: .78rem; color: var(--accent); }
 
-.opponents-row { display: flex; gap: .6rem; padding: .7rem; flex-shrink: 0; overflow-x: auto; }
+.opponents-row { display: flex; width: 100%; gap: .6rem; padding: .7rem; flex-shrink: 0; overflow-x: auto; }
 .opponent-panel {
   flex: 1; min-width: 150px; background: var(--bg-panel); border: 1px solid var(--border);
   border-radius: var(--radius); padding: .6rem; transition: border-color .2s, box-shadow .2s;
