@@ -87,7 +87,7 @@ function evaluateDecomposition(decomp, ctx) {
     const dragonTriplets = groups.filter((g) => g.kind === 'triplet' && TILE_TYPES_BY_ID[g.tiles[0]].category === 'dragon');
     if (dragonTriplets.length === 3) { yakuList.push({ name: 'Daisangen', han: 13 }); yakumanCount += 1; }
   }
-  if (ctx.openMelds && ctx.openMelds.filter((m) => m.kind === 'kan').length + groups.filter((g) => g.isKan).length >= 4) {
+  if (ctx.openMelds && ctx.openMelds.filter((m) => m.kind === 'kan').length >= 4) {
     yakuList.push({ name: 'Suukantsu', han: 13 });
     yakumanCount += 1;
   }
@@ -206,7 +206,7 @@ function calculateFu(decomp, ctx) {
     if (g.kind !== 'triplet') return;
     const termHonor = isTerminalOrHonor(g.tiles[0]);
     const concealedGroup = !g.meld || g.meld.concealed;
-    if (g.isKan) fu += termHonor ? (concealedGroup ? 32 : 16) : (concealedGroup ? 16 : 8);
+    if (g.meld && g.meld.kind === 'kan') fu += termHonor ? (concealedGroup ? 32 : 16) : (concealedGroup ? 16 : 8);
     else fu += termHonor ? (concealedGroup ? 8 : 4) : (concealedGroup ? 4 : 2);
   });
 
