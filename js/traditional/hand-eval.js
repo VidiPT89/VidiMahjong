@@ -100,7 +100,7 @@ function isKokushiMusou(concealedTiles) {
  */
 function checkWin(concealedTiles, melds) {
   const meldGroups = melds.map((m) => ({
-    kind: m.kind === 'kan' ? 'triplet' : m.kind, // a kan counts as a triplet for shape purposes
+    kind: m.kind === 'chi' ? 'sequence' : 'triplet', // pon/kan count as a triplet for shape purposes
     tiles: m.tiles.slice(0, 3),
     meld: m,
   }));
