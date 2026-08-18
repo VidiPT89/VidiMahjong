@@ -197,6 +197,18 @@ function armDealingCleanup(div) {
   div.addEventListener('animationend', () => div.classList.remove('is-dealing'), { once: true });
 }
 
+/* Deals tiles from the center of the board outward, so the pyramid visibly builds up from
+ * the middle instead of appearing in a random order. Distance is normalized against the
+ * board's own extents so the spread of delays looks consistent across difficulties/board
+ * sizes. */
+function dealDelayMs(tile) {
+  const centerX = (EXTENTS.minX + EXTENTS.maxX) / 2;
+  const centerY = (EXTENTS.minY + EXTENTS.maxY) / 2;
+  const maxDist = Math.hypot(EXTENTS.maxX - centerX, EXTENTS.maxY - centerY) || 1;
+  const dist = Math.hypot(tile.x - centerX, tile.y - centerY);
+  return (dist / maxDist) * 260;
+}
+
 function renderTileEl(tile, { dealing } = {}) {
   const div = document.createElement('div');
   div.className = 'tile';
@@ -207,7 +219,7 @@ function renderTileEl(tile, { dealing } = {}) {
   div.style.zIndex = tileZIndex(tile);
   if (dealing) {
     div.classList.add('is-dealing');
-    div.style.animationDelay = `${Math.random() * 260}ms`;
+    div.style.animationDelay = `${dealDelayMs(tile)}ms`;
     armDealingCleanup(div);
   }
 
