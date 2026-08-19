@@ -235,8 +235,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .btn-primary:hover { background: var(--accent-light); box-shadow: 0 10px 30px var(--accent-glow); }
 .btn-secondary { background: var(--bg-panel-2); color: var(--text); border-color: var(--border-strong); }
 .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-.btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
-.btn-ghost:hover { color: var(--text); border-color: var(--border-strong); }
+.btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border-strong); }
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
 
 .app-footer, .menu-screen .app-footer {
   position: absolute; bottom: 1.6rem; left: 0; right: 0; text-align: center;
@@ -262,6 +262,15 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   padding: 1.4rem 1.4rem 3rem; max-width: 640px; margin: 0 auto; width: 100%;
 }
+.htp-tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+.htp-tab {
+  font-family: var(--font-mono); font-weight: 700; font-size: .82rem;
+  background: transparent; border: none; cursor: pointer; color: var(--text-dim);
+  padding: .7rem .3rem; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .2s, border-color .2s;
+}
+.htp-tab:hover { color: var(--text); }
+.htp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 .htp-intro { color: var(--text-dim); line-height: 1.6; }
 .htp-section { margin-top: 2rem; }
 .htp-section h3 { font-family: var(--font-mono); color: var(--accent); font-size: .95rem; margin-bottom: .6rem; }
