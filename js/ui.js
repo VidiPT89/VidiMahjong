@@ -317,6 +317,7 @@ function handleSelectResult(result) {
 
   if (result.type === 'ignored' || result.type === 'blocked') {
     if (result.type === 'blocked') {
+      Sound.mismatch();
       const div = board.querySelector(`.tile[data-id="${result.tile.id}"]`);
       if (div) {
         div.classList.remove('is-mismatch');
@@ -329,11 +330,13 @@ function handleSelectResult(result) {
   }
 
   if (result.type === 'selected' || result.type === 'deselected') {
+    if (result.type === 'selected') Sound.tilePick();
     refreshTileStates();
     return;
   }
 
   if (result.type === 'mismatch') {
+    Sound.mismatch();
     // Only the rejected (previously-selected) tile shakes and deselects.
     // The newly-clicked tile becomes the new selection — it must show the
     // selected glow immediately, not shake: is-mismatch's keyframe
@@ -354,6 +357,7 @@ function handleSelectResult(result) {
   }
 
   if (result.type === 'matched') {
+    Sound.match();
     [result.a, result.b].forEach((t) => {
       const div = board.querySelector(`.tile[data-id="${t.id}"]`);
       if (div) div.classList.add('is-matched');
@@ -483,14 +487,47 @@ function requestRestart() {
 function onWin() {
   stopTimer();
   clearSavedGame();
+  Sound.win();
   const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
   const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const s = String(elapsed % 60).padStart(2, '0');
   el('win-time').textContent = `${m}:${s}`;
   el('win-moves').textContent = game.moves;
   el('win-score').textContent = score;
+  renderLeaderboardBlock(recordLeaderboardWin(selectedDifficulty, elapsed, game.moves));
   openModal('modal-win');
   launchConfetti();
+}
+
+/* Fills in the "best time / best moves" block shown in the win modal, marking whichever
+ * metric was just improved with the "New Best!" label (mirrors the leaderboard UI in the
+ * DroidMahjong/iMahjong ports). */
+function renderLeaderboardBlock({ entry, newBestTime, newBestMoves }) {
+  const t = I18N[currentLang];
+  const block = el('win-leaderboard');
+  if (entry.bestTimeSeconds == null && entry.bestMoves == null) {
+    block.classList.add('hidden');
+    return;
+  }
+  block.classList.remove('hidden');
+
+  if (entry.bestTimeSeconds != null) {
+    const m = String(Math.floor(entry.bestTimeSeconds / 60)).padStart(2, '0');
+    const s = String(entry.bestTimeSeconds % 60).padStart(2, '0');
+    el('win-best-time-label').textContent = newBestTime ? t.newRecordTime : t.bestTime;
+    el('win-best-time').textContent = `${m}:${s}`;
+    el('win-best-time-block').classList.remove('hidden');
+  } else {
+    el('win-best-time-block').classList.add('hidden');
+  }
+
+  if (entry.bestMoves != null) {
+    el('win-best-moves-label').textContent = newBestMoves ? t.newRecordMoves : t.bestMoves;
+    el('win-best-moves').textContent = entry.bestMoves;
+    el('win-best-moves-block').classList.remove('hidden');
+  } else {
+    el('win-best-moves-block').classList.add('hidden');
+  }
 }
 
 function onStuck() {
