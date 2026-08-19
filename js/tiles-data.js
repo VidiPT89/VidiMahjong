@@ -200,6 +200,25 @@ function buildPairUnitsForDifficulty(difficulty) {
   return difficulty === 'easy' ? buildEasyPairUnits() : buildShuffledPairUnits();
 }
 
+/**
+ * Infinite mode's pool: unlike the fixed difficulties (which deal from one real 144-tile
+ * set), the board can grow past 144 tiles, so this just cycles through the 34 non-bonus
+ * types as many times as needed to produce exactly `pairsNeeded` pairs — there's no "only 4
+ * copies of each tile" constraint to honor here, it's an extended variant, not a real set.
+ */
+function buildInfinitePairUnits(totalTiles) {
+  const pairsNeeded = totalTiles / 2;
+  const types = TILE_TYPES.filter((t) => t.category !== 'flower' && t.category !== 'season').map((t) => t.id);
+  const units = [];
+  for (let i = 0; i < pairsNeeded; i++) {
+    const id = types[i % types.length];
+    units.push([id, id]);
+  }
+  shuffleArray(units);
+  units.forEach((unit) => { if (Math.random() < 0.5) unit.reverse(); });
+  return units;
+}
+
 /** Builds matching pair-units from whatever type inventory is passed in
  *  (e.g. the types still on the board when reshuffling mid-game). */
 function buildPairUnitsFromInventory(typeCounts) {

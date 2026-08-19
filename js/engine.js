@@ -68,8 +68,14 @@ function computeSolvablePairingWithRetry(positions, maxAttempts = 200) {
 }
 
 class MahjongGame {
-  constructor(difficulty = 'medium') {
-    this.difficulty = LAYOUTS[difficulty] ? difficulty : 'medium';
+  /**
+   * `level` only matters for difficulty 'infinite': it drives the board size via
+   * buildInfiniteLayout(level) (see layout.js). It's ignored for the three fixed
+   * difficulties, which always deal the same hand-authored layout.
+   */
+  constructor(difficulty = 'medium', level = 1) {
+    this.difficulty = difficulty === 'infinite' || LAYOUTS[difficulty] ? difficulty : 'medium';
+    this.level = level;
     this.tiles = [];
     this.selectedId = null;
     this.history = [];
@@ -80,13 +86,13 @@ class MahjongGame {
   }
 
   reset() {
-    const layout = LAYOUTS[this.difficulty] || TURTLE_LAYOUT;
+    const layout = this.difficulty === 'infinite' ? buildInfiniteLayout(this.level) : (LAYOUTS[this.difficulty] || TURTLE_LAYOUT);
     this.tiles = layout.map((pos, i) => ({
       id: i, x: pos.x, y: pos.y, z: pos.z, removed: false, typeId: null,
     }));
 
     const pairing = computeSolvablePairingWithRetry(this.tiles.map((t) => ({ refId: t.id, x: t.x, y: t.y, z: t.z })));
-    const units = buildPairUnitsForDifficulty(this.difficulty);
+    const units = this.difficulty === 'infinite' ? buildInfinitePairUnits(this.tiles.length) : buildPairUnitsForDifficulty(this.difficulty);
     const byId = new Map(this.tiles.map((t) => [t.id, t]));
     pairing.forEach(([a, b], idx) => {
       const [typeA, typeB] = units[idx];
@@ -103,6 +109,33 @@ class MahjongGame {
     this.moves = 0;
     this.hintsUsed = 0;
     this.startedAt = Date.now();
+  }
+
+  /**
+   * Infinite mode only: deals the next (bigger) level's board in place, keeping the run's
+   * cumulative moves/score/timer going rather than resetting them like reset() does for a
+   * brand new game. The undo history does reset -- undoing across a level boundary back
+   * into an already-cleared board doesn't make sense.
+   */
+  dealNextInfiniteLevel() {
+    this.level += 1;
+    const layout = buildInfiniteLayout(this.level);
+    this.tiles = layout.map((pos, i) => ({
+      id: i, x: pos.x, y: pos.y, z: pos.z, removed: false, typeId: null,
+    }));
+
+    const pairing = computeSolvablePairingWithRetry(this.tiles.map((t) => ({ refId: t.id, x: t.x, y: t.y, z: t.z })));
+    const units = buildInfinitePairUnits(this.tiles.length);
+    const byId = new Map(this.tiles.map((t) => [t.id, t]));
+    pairing.forEach(([a, b], idx) => {
+      const [typeA, typeB] = units[idx];
+      byId.get(a).typeId = typeA;
+      byId.get(b).typeId = typeB;
+    });
+
+    this._provenSolveOrder = pairing;
+    this.selectedId = null;
+    this.history = [];
   }
 
   getTile(id) {
