@@ -69,8 +69,27 @@ function showScreen(id) {
   el(id).classList.remove('hidden');
 }
 
+function setHtpTab(mode) {
+  const isRiichi = mode === 'riichi';
+  el('htp-tab-solitaire').classList.toggle('active', !isRiichi);
+  el('htp-tab-riichi').classList.toggle('active', isRiichi);
+  el('htp-panel-solitaire').classList.toggle('hidden', isRiichi);
+  el('htp-panel-riichi').classList.toggle('hidden', !isRiichi);
+}
+
+// Lets traditional.html's own "How to Play" link jump straight past the splash into the
+// Riichi tab (index.html?htp=riichi) instead of always landing on the menu first.
+let pendingHtpTab = new URLSearchParams(location.search).get('htp');
+
 function goToMenu() {
   stopTimer();
+  if (pendingHtpTab) {
+    const tab = pendingHtpTab;
+    pendingHtpTab = null;
+    setHtpTab(tab);
+    showScreen('htp-screen');
+    return;
+  }
   showScreen('menu-screen');
   el('btn-continue').classList.toggle('hidden', !hasSavedGame());
 }
@@ -620,6 +639,9 @@ function init() {
   el('btn-how-to-play').addEventListener('click', () => showScreen('htp-screen'));
   el('btn-htp-back').addEventListener('click', goToMenu);
   el('btn-htp-close').addEventListener('click', goToMenu);
+
+  el('htp-tab-solitaire').addEventListener('click', () => setHtpTab('solitaire'));
+  el('htp-tab-riichi').addEventListener('click', () => setHtpTab('riichi'));
 
   el('btn-back-menu').addEventListener('click', () => { saveGame(); goToMenu(); });
   el('btn-hint').addEventListener('click', useHint);
