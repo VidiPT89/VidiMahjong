@@ -1,0 +1,9 @@
+{
+  "name": "vidimahjong",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Client-side unit tests for VidiMahjong (Node's built-in test runner, no bundler).",
+  "scripts": {
+    "test": "node --test"
+  }
+}
