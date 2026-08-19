@@ -2,11 +2,9 @@
 
 const SAVE_KEY = 'vidimahjong-save';
 const DIFFICULTY_KEY = 'vidimahjong-difficulty';
-const HINT_LIMIT = 6;
 
 let currentLang = getStoredLang();
 let game = null;
-let hintsRemaining = HINT_LIMIT;
 let timerInterval = null;
 let hintTimeout = null;
 
@@ -51,7 +49,6 @@ function applyLang() {
     opt.classList.toggle('active', opt.getAttribute('data-lang-opt') === currentLang);
   });
 
-  if (game) refreshHintBadge();
 }
 
 function setLang(lang) {
@@ -281,13 +278,11 @@ function refreshTileStates() {
 function startNewGame() {
   game = new MahjongGame(selectedDifficulty);
   EXTENTS = layoutExtentsFor(game.tiles);
-  hintsRemaining = HINT_LIMIT;
   clearSavedGame();
   showScreen('game-screen');
   renderBoard({ dealing: true });
   updateStats();
   startTimer();
-  refreshHintBadge();
   el('btn-undo').disabled = true;
   saveGame();
 }
@@ -297,12 +292,10 @@ function resumeGame() {
   if (!loaded) { startNewGame(); return; }
   game = loaded.game;
   EXTENTS = layoutExtentsFor(game.tiles);
-  hintsRemaining = loaded.hintsRemaining;
   showScreen('game-screen');
   renderBoard({ dealing: false });
   updateStats();
   startTimer();
-  refreshHintBadge();
   el('btn-undo').disabled = game.history.length === 0;
 }
 
@@ -406,18 +399,9 @@ function startTimer() {
 }
 function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
-function refreshHintBadge() {
-  const badge = el('hint-count');
-  badge.textContent = hintsRemaining;
-  el('btn-hint').disabled = hintsRemaining <= 0;
-}
-
 function useHint() {
-  if (hintsRemaining <= 0) { showToast(I18N[currentLang].noHintsLeft); return; }
   const pair = game.findHint();
   if (!pair) { showToast(I18N[currentLang].noHintsLeft); return; }
-  hintsRemaining--;
-  refreshHintBadge();
   updateScore(-3);
   saveGame();
 
@@ -616,7 +600,6 @@ function saveGame() {
       moves: game.moves,
       history: game.history,
       elapsedMs: Date.now() - game.startedAt,
-      hintsRemaining,
       score,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -646,7 +629,7 @@ function loadGame() {
     g.history = data.history || [];
     g.startedAt = Date.now() - (data.elapsedMs || 0);
     score = data.score || 0;
-    return { game: g, hintsRemaining: data.hintsRemaining ?? HINT_LIMIT };
+    return { game: g };
   } catch (e) {
     return null;
   }
