@@ -11,7 +11,7 @@ let hintTimeout = null;
 function getStoredDifficulty() {
   try {
     const stored = localStorage.getItem(DIFFICULTY_KEY);
-    if (stored && LAYOUTS[stored]) return stored;
+    if (stored && (stored === 'infinite' || LAYOUTS[stored])) return stored;
   } catch (e) { /* localStorage unavailable */ }
   return 'easy';
 }
@@ -24,6 +24,14 @@ function applyDifficultyUI() {
   document.querySelectorAll('.difficulty-option').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.difficulty === selectedDifficulty);
   });
+  const bestLevel = getInfiniteBestLevel();
+  const label = el('infinite-best-label');
+  if (bestLevel > 0) {
+    label.textContent = I18N[currentLang].infiniteBestLabel.replace('{level}', bestLevel);
+    label.classList.remove('hidden');
+  } else {
+    label.classList.add('hidden');
+  }
 }
 
 const el = (id) => document.getElementById(id);
@@ -276,7 +284,7 @@ function refreshTileStates() {
    --------------------------------------------------------------------- */
 
 function startNewGame() {
-  game = new MahjongGame(selectedDifficulty);
+  game = new MahjongGame(selectedDifficulty, 1);
   EXTENTS = layoutExtentsFor(game.tiles);
   clearSavedGame();
   showScreen('game-screen');
@@ -368,7 +376,11 @@ function handleSelectResult(result) {
       saveGame();
 
       if (result.won) {
-        onWin();
+        if (game.difficulty === 'infinite') {
+          onInfiniteLevelCleared();
+        } else {
+          onWin();
+        }
       } else if (game.isStuck()) {
         onStuck();
       }
@@ -386,6 +398,13 @@ function updateStats() {
   el('stat-moves').textContent = game.moves;
   el('stat-left').textContent = game.remaining();
   el('stat-score').textContent = score;
+  const levelGroup = el('stat-level-group');
+  if (game.difficulty === 'infinite') {
+    el('stat-level').textContent = game.level;
+    levelGroup.classList.remove('hidden');
+  } else {
+    levelGroup.classList.add('hidden');
+  }
 }
 
 function startTimer() {
@@ -481,6 +500,31 @@ function onWin() {
   renderLeaderboardBlock(recordLeaderboardWin(selectedDifficulty, elapsed, game.moves));
   openModal('modal-win');
   launchConfetti();
+}
+
+/**
+ * Infinite mode never shows the "You Win" modal -- clearing a level just chains straight
+ * into the next (bigger) one, so the run keeps going instead of stopping. Progress (the
+ * highest level reached) is saved after every level, not just when the player eventually
+ * quits, so it survives an accidental tab close mid-run.
+ */
+function onInfiniteLevelCleared() {
+  const clearedLevel = game.level;
+  const isNewRecord = recordInfiniteLevel(clearedLevel);
+  Sound.win();
+  showToast(
+    (isNewRecord ? I18N[currentLang].newRecordLevel : I18N[currentLang].levelCleared)
+      .replace('{level}', clearedLevel)
+  );
+
+  setTimeout(() => {
+    game.dealNextInfiniteLevel();
+    EXTENTS = layoutExtentsFor(game.tiles);
+    renderBoard({ dealing: true });
+    updateStats();
+    el('btn-undo').disabled = true;
+    saveGame();
+  }, 900);
 }
 
 /* Fills in the "best time / best moves" block shown in the win modal, marking whichever
@@ -595,6 +639,7 @@ function saveGame() {
   try {
     const data = {
       difficulty: game.difficulty,
+      level: game.level,
       typeIds: game.tiles.map((t) => t.typeId),
       removed: game.tiles.map((t) => t.removed),
       moves: game.moves,
@@ -619,7 +664,7 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    const g = new MahjongGame(data.difficulty || 'medium');
+    const g = new MahjongGame(data.difficulty || 'medium', data.level || 1);
     if (!data.typeIds || data.typeIds.length !== g.tiles.length) return null;
     g.tiles.forEach((t, i) => {
       t.typeId = data.typeIds[i];

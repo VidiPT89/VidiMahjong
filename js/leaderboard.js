@@ -40,3 +40,21 @@ function recordLeaderboardWin(difficulty, timeSeconds, moves) {
   saveLeaderboard(all);
   return { entry: current, newBestTime, newBestMoves };
 }
+
+/** Infinite mode has no fixed board to compare times/moves against (it grows every level),
+ * so its only record is the highest level ever reached, tracked separately from the
+ * time/moves entries above. */
+function getInfiniteBestLevel() {
+  const entry = loadLeaderboard().infinite;
+  return (entry && entry.bestLevel) || 0;
+}
+
+function recordInfiniteLevel(level) {
+  const all = loadLeaderboard();
+  const current = all.infinite || {};
+  const isNewRecord = !current.bestLevel || level > current.bestLevel;
+  if (isNewRecord) current.bestLevel = level;
+  all.infinite = current;
+  saveLeaderboard(all);
+  return isNewRecord;
+}

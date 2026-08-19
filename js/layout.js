@@ -132,6 +132,45 @@ function buildHardLayout() {
 const EASY_LAYOUT = buildEasyLayout();
 const HARD_LAYOUT = buildHardLayout();
 
+/**
+ * Procedural layout for the "Infinite" mode: a flat base rectangle that grows wider and
+ * taller every couple of levels, with a shrinking stack of centered layers on top whose
+ * count also grows with the level. Base width/height are always kept even, so every layer's
+ * area (even x even, or even x odd shrunk from an even start) stays even too, meaning the
+ * board never needs an odd tile discarded to stay pairable.
+ *
+ * Layers always shrink by 2 in each dimension and stop at 2x2 (same "never a lone unpaired
+ * tile at the peak" rule as the hand-authored layouts above), so this feeds the exact same
+ * computeSolvablePairingWithRetry() used everywhere else without any special-casing.
+ */
+function buildInfiniteLayout(level) {
+  const positions = [];
+  const push = (x, y, z) => positions.push({ x, y, z });
+
+  const baseW = 10 + 2 * Math.floor((level - 1) / 2);
+  const baseH = 6 + 2 * Math.floor((level - 1) / 3);
+  for (let y = 0; y < baseH; y++) {
+    for (let x = 0; x < baseW; x++) push(x, y, 0);
+  }
+
+  const maxLayers = 1 + Math.floor(level / 2);
+  let w = baseW - 4;
+  let h = baseH - 2;
+  let z = 1;
+  while (w >= 2 && h >= 2 && z <= maxLayers) {
+    const xOff = Math.floor((baseW - w) / 2);
+    const yOff = Math.floor((baseH - h) / 2);
+    for (let yy = 0; yy < h; yy++) {
+      for (let xx = 0; xx < w; xx++) push(xOff + xx, yOff + yy, z);
+    }
+    w -= 2;
+    h -= 2;
+    z++;
+  }
+
+  return positions;
+}
+
 const LAYOUTS = { easy: EASY_LAYOUT, medium: TURTLE_LAYOUT, hard: HARD_LAYOUT };
 const LAYOUT_TILE_COUNT = { easy: 108, medium: 144, hard: 144 };
 
