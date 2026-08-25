@@ -355,12 +355,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   position: absolute;
   width: var(--tile-w); height: var(--tile-h);
   border-radius: calc(var(--tile-w) * 0.13);
-  background: linear-gradient(160deg, #fdf8ec 0%, #f3e9d2 45%, #e7d7ae 75%, #d8c48e 100%);
+  background:
+    radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.85), rgba(255,255,255,0) 55%),
+    linear-gradient(165deg, #fefaf0 0%, #f6ecd4 40%, #e9d9ae 72%, #d6c188 100%);
   box-shadow:
-    0 1px 0 rgba(255,255,255,.6) inset,
-    0 -3px 0 rgba(0,0,0,.08) inset,
-    0 4px 0 #a8946a,
-    0 6px 10px rgba(0,0,0,.35);
+    0 1px 0 rgba(255,255,255,.75) inset,
+    1px 0 0 rgba(255,255,255,.35) inset,
+    -1px 0 0 rgba(120,100,60,.12) inset,
+    0 -4px 0 rgba(0,0,0,.09) inset,
+    0 2px 0 #cbb789,
+    0 5px 0 #a8946a,
+    0 6px 1px #8a7852,
+    0 9px 14px rgba(0,0,0,.4);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform .16s var(--ease), box-shadow .16s var(--ease), filter .2s;
@@ -369,6 +375,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .tile::after {
   content: ""; position: absolute; inset: 3px;
   border: 1px solid rgba(120, 100, 60, .18); border-radius: calc(var(--tile-w) * 0.1);
+  box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
   pointer-events: none;
 }
 .tile-face {
@@ -377,15 +384,32 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   font-family: var(--font-tile);
 }
 
-.tile.is-covered-visual { filter: brightness(.82) saturate(.85); }
+.tile.is-covered-visual { filter: brightness(.8) saturate(.85); }
 .tile.is-blocked-visual { filter: brightness(.94); }
 
-.tile.is-free:hover { transform: translateY(-4px) scale(1.035); box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 -3px 0 rgba(0,0,0,.08) inset, 0 4px 0 #a8946a, 0 12px 20px rgba(0,0,0,.4); }
+.tile.is-free:hover {
+  transform: translateY(-5px) scale(1.04);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.75) inset,
+    1px 0 0 rgba(255,255,255,.35) inset,
+    -1px 0 0 rgba(120,100,60,.12) inset,
+    0 -4px 0 rgba(0,0,0,.09) inset,
+    0 2px 0 #cbb789,
+    0 5px 0 #a8946a,
+    0 6px 1px #8a7852,
+    0 16px 24px rgba(0,0,0,.45);
+}
 .tile.is-blocked { cursor: default; }
 
 .tile.is-selected {
-  transform: translateY(-9px) scale(1.05);
-  box-shadow: 0 0 0 3px var(--accent), 0 1px 0 rgba(255,255,255,.6) inset, 0 4px 0 var(--accent-dark), 0 14px 26px var(--accent-glow);
+  transform: translateY(-10px) scale(1.06);
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 1px 0 rgba(255,255,255,.75) inset,
+    0 -4px 0 rgba(0,0,0,.09) inset,
+    0 2px 0 var(--accent-light),
+    0 5px 0 var(--accent-dark),
+    0 16px 30px var(--accent-glow);
   z-index: 999 !important;
 }
 
