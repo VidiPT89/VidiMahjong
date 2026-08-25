@@ -59,14 +59,13 @@
           <button class="difficulty-option" data-difficulty="easy" data-i18n="difficultyEasy"></button>
           <button class="difficulty-option" data-difficulty="medium" data-i18n="difficultyMedium"></button>
           <button class="difficulty-option" data-difficulty="hard" data-i18n="difficultyHard"></button>
-          <button class="difficulty-option" data-difficulty="infinite" data-i18n="difficultyInfinite"></button>
         </div>
-        <p id="infinite-best-label" class="infinite-best-label hidden"></p>
       </div>
 
       <div class="menu-buttons">
         <button id="btn-continue" class="btn btn-secondary hidden" data-i18n="continueGame"></button>
         <button id="btn-play" class="btn btn-primary" data-i18n="play"></button>
+        <button id="btn-levels" class="btn btn-secondary" data-i18n="levelsMode"></button>
         <a id="btn-traditional" class="btn btn-secondary" href="traditional.html" data-i18n="traditionalMode"></a>
         <button id="btn-how-to-play" class="btn btn-ghost" data-i18n="howToPlay"></button>
       </div>
@@ -79,6 +78,22 @@
       <span class="dot">·</span>
       <a href="https://github.com/VidiPT89/" target="_blank" rel="noopener noreferrer">GitHub</a>
     </footer>
+  </section>
+
+  <!-- ============ LEVEL SELECT ============ -->
+  <section id="levels-screen" class="screen levels-screen hidden">
+    <header class="sub-header">
+      <button id="btn-levels-back" class="icon-btn" aria-label="back">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 data-i18n="levelsSelectTitle"></h2>
+      <span class="sub-header-spacer"></span>
+    </header>
+
+    <p class="levels-subtitle" data-i18n="levelsSelectSubtitle"></p>
+    <p id="levels-complete-label" class="levels-complete-label hidden" data-i18n="allLevelsComplete"></p>
+
+    <div id="levels-grid" class="levels-grid"></div>
   </section>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -248,7 +263,7 @@
       <canvas id="confetti-canvas"></canvas>
       <div class="modal-body">
         <h2 data-i18n="winTitle"></h2>
-        <p data-i18n="winSubtitle"></p>
+        <p id="win-subtitle" data-i18n="winSubtitle"></p>
         <div class="modal-stats">
           <div><span data-i18n="finalTime"></span><strong id="win-time"></strong></div>
           <div><span data-i18n="finalMoves"></span><strong id="win-moves"></strong></div>
@@ -295,12 +310,12 @@
   <div id="toast" class="toast hidden"></div>
 </div>
 
-<script src="js/i18n.js?v=7"></script>
+<script src="js/i18n.js?v=8"></script>
 <script src="js/tiles-data.js?v=4"></script>
-<script src="js/layout.js?v=4"></script>
+<script src="js/layout.js?v=5"></script>
 <script src="js/engine.js?v=4"></script>
 <script src="js/leaderboard.js?v=1"></script>
 <script src="js/sound.js?v=1"></script>
-<script src="js/ui.js?v=8"></script>
+<script src="js/ui.js?v=10"></script>
 </body>
 </html>

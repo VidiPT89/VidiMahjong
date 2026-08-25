@@ -24,14 +24,6 @@ function applyDifficultyUI() {
   document.querySelectorAll('.difficulty-option').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.difficulty === selectedDifficulty);
   });
-  const bestLevel = getInfiniteBestLevel();
-  const label = el('infinite-best-label');
-  if (bestLevel > 0) {
-    label.textContent = I18N[currentLang].infiniteBestLabel.replace('{level}', bestLevel);
-    label.classList.remove('hidden');
-  } else {
-    label.classList.add('hidden');
-  }
 }
 
 const el = (id) => document.getElementById(id);
@@ -187,17 +179,23 @@ function computeTileSize() {
   root.setProperty('--tile-step-y', `${stepY}px`);
   root.setProperty('--layer-nudge', `${nudge}px`);
 
+  // Padding of maxZ * nudge on BOTH the leading and trailing edge keeps the board's
+  // declared width/height in sync with what tilePosition() actually places -- the base
+  // layer (z=0) sits pushed all the way into that padding, the top layer (z=maxZ) sits
+  // flush at the origin, so the content is symmetric inside its own frame instead of
+  // leaning toward one corner (see tilePosition()).
   const board = boardEl();
-  board.style.width = `${spanX * stepX + tileW + EXTENTS.maxZ * nudge}px`;
-  board.style.height = `${spanY * stepY + tileH + EXTENTS.maxZ * nudge}px`;
+  board.style.width = `${spanX * stepX + tileW + EXTENTS.maxZ * nudge * 2}px`;
+  board.style.height = `${spanY * stepY + tileH + EXTENTS.maxZ * nudge * 2}px`;
 }
 
 function tilePosition(tile) {
   const stepX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-step-x'));
   const stepY = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-step-y'));
   const nudge = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--layer-nudge'));
-  const left = (tile.x - EXTENTS.minX) * stepX + tile.z * nudge * 0.5;
-  const top = (tile.y - EXTENTS.minY) * stepY - tile.z * nudge + EXTENTS.maxZ * nudge;
+  const shift = (EXTENTS.maxZ - tile.z) * nudge;
+  const left = (tile.x - EXTENTS.minX) * stepX + shift;
+  const top = (tile.y - EXTENTS.minY) * stepY + shift;
   return { left, top };
 }
 
@@ -293,6 +291,50 @@ function startNewGame() {
   startTimer();
   el('btn-undo').disabled = true;
   saveGame();
+}
+
+function startLevel(level) {
+  game = new MahjongGame('infinite', level);
+  EXTENTS = layoutExtentsFor(game.tiles);
+  clearSavedGame();
+  showScreen('game-screen');
+  renderBoard({ dealing: true });
+  updateStats();
+  startTimer();
+  el('btn-undo').disabled = true;
+  saveGame();
+}
+
+/* Level select grid: five columns per tier, locked levels shown disabled with a lock icon.
+   A level is unlocked once the previous one has been cleared (bestLevel + 1); level 1 is
+   always unlocked since bestLevel defaults to 0. */
+function renderLevelSelect() {
+  const dict = I18N[currentLang];
+  const bestLevel = getInfiniteBestLevel();
+  el('levels-complete-label').classList.toggle('hidden', bestLevel < LEVELS_MAX_LEVEL);
+
+  const grid = el('levels-grid');
+  grid.innerHTML = '';
+  LEVEL_TIERS.forEach((tier) => {
+    const label = document.createElement('p');
+    label.className = 'levels-tier-label';
+    label.textContent = dict[`tier${tier.key.charAt(0).toUpperCase()}${tier.key.slice(1)}`];
+    grid.appendChild(label);
+
+    const row = document.createElement('div');
+    row.className = 'levels-tier-row';
+    for (let level = tier.range[0]; level <= tier.range[1]; level++) {
+      const unlocked = level <= bestLevel + 1;
+      const cleared = level <= bestLevel;
+      const btn = document.createElement('button');
+      btn.className = 'level-tile' + (cleared ? ' is-cleared' : '');
+      btn.disabled = !unlocked;
+      btn.textContent = unlocked ? String(level) : '🔒';
+      if (unlocked) btn.addEventListener('click', () => startLevel(level));
+      row.appendChild(btn);
+    }
+    grid.appendChild(row);
+  });
 }
 
 function resumeGame() {
@@ -503,15 +545,30 @@ function onWin() {
 }
 
 /**
- * Infinite mode never shows the "You Win" modal -- clearing a level just chains straight
- * into the next (bigger) one, so the run keeps going instead of stopping. Progress (the
- * highest level reached) is saved after every level, not just when the player eventually
- * quits, so it survives an accidental tab close mid-run.
+ * Levels mode shows the "You Win" modal only once the whole ladder (LEVELS_MAX_LEVEL) is
+ * cleared -- before that, clearing a level just chains straight into the next (bigger) one,
+ * so a run keeps going instead of stopping at every step. Progress (the highest level
+ * reached) is saved after every level, not just when the player eventually quits, so it
+ * survives an accidental tab close mid-run.
  */
 function onInfiniteLevelCleared() {
   const clearedLevel = game.level;
   const isNewRecord = recordInfiniteLevel(clearedLevel);
   Sound.win();
+
+  if (clearedLevel >= LEVELS_MAX_LEVEL) {
+    stopTimer();
+    clearSavedGame();
+    el('win-time').textContent = el('stat-time').textContent;
+    el('win-moves').textContent = game.moves;
+    el('win-score').textContent = score;
+    el('win-subtitle').textContent = I18N[currentLang].allLevelsComplete;
+    el('win-leaderboard').classList.add('hidden');
+    openModal('modal-win');
+    launchConfetti();
+    return;
+  }
+
   showToast(
     (isNewRecord ? I18N[currentLang].newRecordLevel : I18N[currentLang].levelCleared)
       .replace('{level}', clearedLevel)
@@ -701,6 +758,8 @@ function init() {
 
   el('btn-play').addEventListener('click', () => { score = 0; startNewGame(); });
   el('btn-continue').addEventListener('click', resumeGame);
+  el('btn-levels').addEventListener('click', () => { score = 0; renderLevelSelect(); showScreen('levels-screen'); });
+  el('btn-levels-back').addEventListener('click', goToMenu);
   el('btn-how-to-play').addEventListener('click', () => showScreen('htp-screen'));
   el('btn-htp-back').addEventListener('click', goToMenu);
   el('btn-htp-close').addEventListener('click', goToMenu);
@@ -722,7 +781,7 @@ function init() {
 
   el('btn-stuck-shuffle').addEventListener('click', doShuffle);
   el('btn-stuck-undo').addEventListener('click', doUndo);
-  el('btn-stuck-menu').addEventListener('click', () => { closeAllModals(); saveGame(); goToMenu(); });
+  el('btn-stuck-menu').addEventListener('click', () => { closeAllModals(); clearSavedGame(); goToMenu(); });
 
   window.addEventListener('resize', () => { if (game && !el('game-screen').classList.contains('hidden')) renderBoard({ dealing: false }); });
 }

@@ -174,6 +174,22 @@ function buildInfiniteLayout(level) {
 const LAYOUTS = { easy: EASY_LAYOUT, medium: TURTLE_LAYOUT, hard: HARD_LAYOUT };
 const LAYOUT_TILE_COUNT = { easy: 108, medium: 144, hard: 144 };
 
+/* Levels mode (formerly "Infinite") is capped at a fixed run instead of growing forever, so
+   it reads as a finite ladder of objectives rather than an endless mode. The same procedural
+   board growth (buildInfiniteLayout) still drives the difficulty curve; only the ceiling and
+   the tier labels shown in level select are new. */
+const LEVELS_MAX_LEVEL = 15;
+const LEVEL_TIERS = [
+  { key: 'easy', range: [1, 5] },
+  { key: 'medium', range: [6, 10] },
+  { key: 'hard', range: [11, 15] },
+];
+
+function levelTierOf(level) {
+  const tier = LEVEL_TIERS.find(t => level >= t.range[0] && level <= t.range[1]);
+  return tier ? tier.key : 'hard';
+}
+
 if (typeof console !== 'undefined' && console.assert) {
   console.assert(TURTLE_LAYOUT.length === 144, `Layout must have 144 tiles, has ${TURTLE_LAYOUT.length}`);
   console.assert(EASY_LAYOUT.length === 108, `Easy layout must have 108 tiles, has ${EASY_LAYOUT.length}`);
