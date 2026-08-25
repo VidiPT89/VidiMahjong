@@ -264,15 +264,17 @@ function renderBoard({ dealing } = {}) {
 
 function refreshTileStates() {
   const board = boardEl();
+  const freeIds = game.freeTileIds();
   board.querySelectorAll('.tile').forEach((div) => {
     const id = Number(div.dataset.id);
     const tile = game.getTile(id);
     if (!tile || tile.removed) return;
-    const free = game.isFree(tile);
+    const free = freeIds.has(id);
+    const covered = !free && game.isCovered(tile);
     div.classList.toggle('is-free', free);
     div.classList.toggle('is-blocked', !free);
-    div.classList.toggle('is-covered-visual', game.isCovered(tile));
-    div.classList.toggle('is-blocked-visual', !free && !game.isCovered(tile));
+    div.classList.toggle('is-covered-visual', covered);
+    div.classList.toggle('is-blocked-visual', !free && !covered);
     div.classList.toggle('is-selected', game.selectedId === id);
   });
 }

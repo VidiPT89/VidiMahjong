@@ -172,6 +172,39 @@ class MahjongGame {
     return this.active().filter((t) => this.isFree(t));
   }
 
+  /**
+   * Same result as calling isFree() once per tile, but O(active tiles) total instead of
+   * O(n^2) -- isCovered/isOpenLeft/isOpenRight each linear-scan the whole board, which is
+   * fine for a single lookup (a click, a hint) but far too slow to call once per rendered
+   * tile every time the board redraws: refreshTileStates() used to do exactly that (and call
+   * isCovered a second time on top), the same underlying bug that caused the reported
+   * tap/match lag on the SwiftUI port. Returns a Set of free tile ids; the per-tile methods
+   * above stay as the simple reference implementation for one-off queries elsewhere (select,
+   * findHint, isStuck).
+   */
+  freeTileIds() {
+    const activeTiles = this.active();
+    const occupied = new Set();
+    const maxZInColumn = new Map();
+    const cellKey = (x, y, z) => `${x},${y},${z}`;
+    const colKey = (x, y) => `${x},${y}`;
+    for (const t of activeTiles) {
+      occupied.add(cellKey(t.x, t.y, t.z));
+      const col = colKey(t.x, t.y);
+      maxZInColumn.set(col, Math.max(maxZInColumn.get(col) ?? t.z, t.z));
+    }
+
+    const result = new Set();
+    for (const t of activeTiles) {
+      const covered = (maxZInColumn.get(colKey(t.x, t.y)) ?? t.z) > t.z;
+      if (covered) continue;
+      const openLeft = !occupied.has(cellKey(t.x - 1, t.y, t.z));
+      const openRight = !occupied.has(cellKey(t.x + 1, t.y, t.z));
+      if (openLeft || openRight) result.add(t.id);
+    }
+    return result;
+  }
+
   /** Attempts to select a tile; returns what happened so the UI can animate/react. */
   select(id) {
     const tile = this.getTile(id);
